@@ -1,0 +1,7 @@
+[project]
+name = "local-rag-solution"
+version = "0.1.0"
+description = "Local RAG Solution with LangChain and ChromaDB"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
