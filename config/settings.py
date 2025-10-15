@@ -1,5 +1,5 @@
 """
-Simple configuration for Local RAG Solution
+Configuration for Local RAG Solution
 """
 
 import os
@@ -18,8 +18,8 @@ class Settings:
     COLLECTION_NAME = "rag_documents"
     
     # Document processing
-    CHUNK_SIZE = 1000
-    CHUNK_OVERLAP = 200
+    CHUNK_SIZE = 500  # Smaller chunks for better processing
+    CHUNK_OVERLAP = 100
     
     # Local Llama model
     LLM_MODEL_PATH = "./models/llama"  # Path to your Llama model

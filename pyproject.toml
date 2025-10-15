@@ -4,4 +4,27 @@ version = "0.1.0"
 description = "Local RAG Solution with LangChain and ChromaDB"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    # Core LangChain
+    "langchain>=0.3.0",
+    "langchain-community>=0.3.0",
+    "langchain-huggingface>=0.1.0",
+    
+    # Embeddings
+    "sentence-transformers>=3.0.0",
+    "transformers>=4.44.0",
+    "torch>=2.4.0",
+    
+    # Simple vector store (no database needed!)
+    "faiss-cpu>=1.7.4",
+    
+    # Document processing (simple)
+    "pypdf>=4.0.0",
+    "pymupdf>=1.23.0",
+    "python-dotenv>=1.0.1",
+    
+    # Utilities
+    "numpy>=1.26.0",
+    "tqdm>=4.66.0",
+    "chromadb>=0.5.0"
+]
