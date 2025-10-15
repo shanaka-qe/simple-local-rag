@@ -1,7 +1,7 @@
 # Local RAG Solution
 
-Author: Shanaka Fernando
-LinkedIn: https://www.linkedin.com/in/shanaka-qe/
+**Author:** Shanaka Fernando  
+**LinkedIn:** https://www.linkedin.com/in/shanaka-qe/
 
 A simple, local Retrieval-Augmented Generation (RAG) system built with LangChain, ChromaDB, and local Llama models. This project demonstrates how to create a complete RAG pipeline for document processing and intelligent search.
 
@@ -25,60 +25,32 @@ local-rag-solution/
 │   ├── document_processor.py    # Document processing utilities
 │   └── document_search.py       # Search utilities
 ├── data/
-│   ├── documents/               # Your documents go here
+│   ├── documents/               # Your documents go here (sample files included)
 │   └── chroma_db/              # ChromaDB storage (auto-created)
 ├── main.py                     # Main application
 ├── pyproject.toml             # Dependencies
 └── README.md                   # This file
 ```
 
-## 🛠️ Installation
+## 📖 Getting Started
 
-### Prerequisites
-- Python 3.13+
-- uv package manager
+**For detailed setup and usage instructions, see [USER_GUIDE.md](USER_GUIDE.md)**
 
-### Setup
+### Quick Start
 ```bash
-# Clone the repository
+# Clone and install
 git clone <your-repo-url>
 cd local-rag-solution
-
-# Install dependencies
 uv sync
 
-# Create documents directory
-mkdir -p data/documents
-```
-
-## 📚 Usage
-
-### 1. Add Your Documents
-Place your documents in the `data/documents/` folder:
-```bash
-data/documents/
-├── your-document.pdf
-├── notes.txt
-└── research.md
-```
-
-**Supported formats**: PDF, TXT, MD
-
-### 2. Process Documents
-```bash
-# Process all documents and create embeddings
+# Add your documents to data/documents/
+# Process documents
 python utils/document_processor.py
-```
 
-### 3. Search Documents
-```bash
-# Test search functionality
+# Test search
 python utils/document_search.py
-```
 
-### 4. Run Complete Pipeline
-```bash
-# Run the full RAG system
+# Run full pipeline
 python main.py
 ```
 
@@ -98,38 +70,6 @@ CHUNK_OVERLAP = 100       # Overlap between chunks
 COLLECTION_NAME = "documents"
 ```
 
-## 🔍 API Reference
-
-### Document Processing
-```python
-from utils import process_documents_folder, clear_chroma_db
-
-# Process documents from folder
-collection = process_documents_folder()
-
-# Clear existing database
-clear_chroma_db()
-```
-
-### Search Functions
-```python
-from utils.document_search import search_documents
-
-# Basic search
-results = search_documents("What is machine learning?", n_results=3)
-
-# Search with metadata
-results = search_with_metadata("How to use Python?", n_results=2)
-```
-
-### Database Info
-```python
-from utils.document_search import get_collection_info
-
-# Get database statistics
-info = get_collection_info()
-print(f"Total chunks: {info['count']}")
-```
 
 ## 🧠 How It Works
 
