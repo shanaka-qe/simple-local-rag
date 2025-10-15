@@ -23,10 +23,9 @@ def main():
     
     # Test different queries
     test_queries = [
-        "What is machine learning?",
-        "How to use Python?",
-        "What is ChromaDB?",
-        "Tell me about LangChain"
+       "Who is Prof. Elena Rodriguez?",
+        "What are the requirements for the project?",
+        "What are the specifications?"
     ]
     
     for query in test_queries:
@@ -34,10 +33,6 @@ def main():
         search_documents(query, n_results=2)
     
     print("\n🎉 RAG system test completed!")
-    print("\nNext steps:")
-    print("1. Add your Llama model integration")
-    print("2. Create a complete RAG pipeline")
-    print("3. Build a user interface")
 
 
 if __name__ == "__main__":
