@@ -8,3 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Generated vector DB
+data/chroma_db/
+
+# macOS
+.DS_Store
+**/.DS_Store
