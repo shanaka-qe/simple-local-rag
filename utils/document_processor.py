@@ -119,7 +119,7 @@ def chunk_documents(documents: List[str]) -> List[str]:
     return all_chunks
 
 
-def create_embeddings_and_save(chunks: List[str], collection_name: str = "documents"):
+def create_embeddings_and_save(chunks: List[str], collection_name: str = settings.COLLECTION_NAME):
     """Create embeddings and save to ChromaDB"""
     print("🔄 Creating embeddings...")
     
@@ -157,7 +157,7 @@ def create_embeddings_and_save(chunks: List[str], collection_name: str = "docume
     return collection
 
 
-def process_documents_folder(folder_path: str = "./data/documents", collection_name: str = "documents"):
+def process_documents_folder(folder_path: str = "./data/documents", collection_name: str = settings.COLLECTION_NAME):
     """Complete pipeline: clear, load, chunk, and save documents"""
     print("🚀 Processing documents from folder...")
     print("=" * 50)

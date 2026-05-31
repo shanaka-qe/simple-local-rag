@@ -18,7 +18,7 @@ def search_documents(query: str, n_results: int = 3):
     
     # Connect to existing ChromaDB
     client = chromadb.PersistentClient(path="./data/chroma_db")
-    collection = client.get_collection("documents")
+    collection = client.get_collection(settings.COLLECTION_NAME)
     
     # Create embedding model
     embeddings_model = HuggingFaceEmbeddings(

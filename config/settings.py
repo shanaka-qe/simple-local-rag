@@ -15,7 +15,7 @@ class Settings:
     
     # ChromaDB settings
     CHROMA_DIR = "./data/chroma_db"
-    COLLECTION_NAME = "rag_documents"
+    COLLECTION_NAME = "documents"
     
     # Document processing
     CHUNK_SIZE = 500  # Smaller chunks for better processing
