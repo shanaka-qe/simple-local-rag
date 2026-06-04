@@ -21,7 +21,7 @@ chat with and evaluate. Each task is self-contained — do them in order.
 | 02 | [Make search return results](02-search-returns-results.md) | ✅ done | 01 |
 | 03 | [Add local LLM generation](03-local-llm-generation.md) | ✅ done | 02 |
 | 04 | [Streamlit chat UI](04-streamlit-chat-ui.md) | ✅ done | 03 |
-| 05 | [Build a golden eval dataset](05-golden-dataset.md) | 🚧 todo | 03 |
+| 05 | [Build a golden eval dataset](05-golden-dataset.md) | ✅ done | 03 |
 | 06 | [Evals with promptfoo](06-evals-promptfoo.md) | 🚧 todo | 05 |
 | 07 | [Evals with DeepEval](07-evals-deepeval.md) | 🚧 todo | 05 |
 | 08 | [Evals with Ragas](08-evals-ragas.md) | 🚧 todo | 05 |

@@ -54,16 +54,24 @@ local-judged scores as directional, not absolute.
 
 > Built in tasks [05–08](../tasks/05-golden-dataset.md); the planned shapes follow.
 
-### Golden dataset (task 05)
+### Golden dataset (task 05 — ✅ built: `eval/dataset.yaml`)
 
 ```yaml
-- question: "Who leads the quantum computing lab?"
-  expected_answer: "Prof. Elena Rodriguez"
-  expected_context: "QUANTUM_MD_MARKER_4729"   # must appear in the retrieved chunks
+cases:
+  - id: quantum-director
+    question: "Who is the research director of the Quantum Computing Research Laboratory?"
+    answerable: true
+    expected_answer: "The research director is Prof. Elena Rodriguez."
+    expected_contains: ["Elena Rodriguez"]      # deterministic answer check
+    expected_context: "QCR-LAB-9847"            # must appear in the retrieved chunks
 ```
 
 The unique markers in the sample docs make `expected_context` a **deterministic**
-retrieval check — no judge needed for that part.
+retrieval check — no judge needed for that part. Anchor it on a string in the
+**same chunk** as the fact (the quantum doc's bottom-of-file marker lands in a
+different chunk, so the cases use the header's `QCR-LAB-9847` instead). The file
+also includes 2 `answerable: false` cases to test that the RAG declines rather
+than invents an answer.
 
 ### promptfoo (task 06)
 
