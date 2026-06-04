@@ -4,7 +4,6 @@ Document processing utility for RAG system
 
 import os
 import sys
-import shutil
 from pathlib import Path
 from typing import List
 import chromadb
@@ -17,14 +16,18 @@ from config.settings import settings
 
 
 def clear_chroma_db():
-    """Completely delete existing ChromaDB to avoid conflicts"""
-    chroma_path = Path(settings.CHROMA_DIR)
-    
-    if chroma_path.exists():
-        shutil.rmtree(chroma_path)
-        print("🗑️ Deleted existing ChromaDB")
-    else:
-        print("📁 No existing ChromaDB found")
+    """Delete the existing collection so it can be rebuilt cleanly.
+
+    Uses the ChromaDB client API rather than deleting the directory, so it stays
+    consistent in long-running processes (e.g. the Streamlit app) where the client
+    is cached in memory.
+    """
+    client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
+    try:
+        client.delete_collection(settings.COLLECTION_NAME)
+        print("🗑️ Deleted existing collection")
+    except Exception:
+        print("📁 No existing collection found")
 
 
 def load_documents_from_folder(folder_path: str) -> List[str]:
@@ -76,7 +79,13 @@ def create_embeddings_and_save(chunks: List[str], collection_name: str = setting
     
     # Create ChromaDB client
     client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
-    
+
+    # Replace any existing collection so the rebuild is clean
+    try:
+        client.delete_collection(collection_name)
+    except Exception:
+        pass
+
     # Create collection
     collection = client.create_collection(
         name=collection_name,

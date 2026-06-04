@@ -1,16 +1,19 @@
 # 04 — Streamlit chat UI
 
+**Status: ✅ Completed**
+
 **Goal:** A single-page web UI to chat with your documents.
 
 ## Steps
 
-- [ ] Add dep: `uv add streamlit`.
-- [ ] Create `app.py` with a Streamlit chat interface:
-      - a text input for the question,
+- [x] Add dep: `uv add streamlit`.
+- [x] Create `app.py` with a Streamlit chat interface:
+      - a chat input for the question,
       - calls `answer_question()` (task 03),
       - shows the answer, and the retrieved chunks in an expander ("sources").
-- [ ] Keep chat history in `st.session_state` so the conversation stays on screen.
-- [ ] Run with `uv run streamlit run app.py`.
+- [x] Keep chat history in `st.session_state` so the conversation stays on screen.
+- [x] Sidebar shows index status and a build/rebuild button.
+- [x] Run with `uv run streamlit run app.py`.
 
 ## Files
 

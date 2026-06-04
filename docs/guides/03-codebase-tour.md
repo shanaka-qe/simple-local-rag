@@ -30,11 +30,13 @@ Everything in this diagram runs locally.
 ```
 local-rag-solution/
 ├── main.py                      # interactive console (build index, search, ask, chat)
+├── app.py                       # Streamlit web UI (browser chat)
 ├── config/
 │   └── settings.py              # all settings in one place
 ├── utils/
 │   ├── document_processor.py    # load → chunk → embed → store (builds the DB)
-│   └── document_search.py       # turn a question into a search over the DB
+│   ├── document_search.py       # turn a question into a search over the DB
+│   └── rag.py                   # retrieve + generate an answer (full RAG)
 ├── data/
 │   ├── documents/               # put your .md files here
 │   └── chroma_db/               # the vector database (auto-created, git-ignored)
@@ -48,9 +50,11 @@ local-rag-solution/
 | File | Plain-English job |
 |------|-------------------|
 | `config/settings.py` | One place for every setting: embedding model, chunk size (500) / overlap (100), where ChromaDB lives, the collection name, prompt templates. |
-| `utils/document_processor.py` | The ingestion pipeline: read files → split into chunks → create embeddings → save to ChromaDB. Wipes and rebuilds the DB on each run. |
+| `utils/document_processor.py` | The ingestion pipeline: read files → split into chunks → create embeddings → save to ChromaDB. Rebuilds the collection each time you build the index. |
 | `utils/document_search.py` | Takes a question, embeds it, asks ChromaDB for the closest chunks. |
+| `utils/rag.py` | The full RAG: retrieve chunks, build the prompt, call the local LLM, return `{answer, contexts}`. |
 | `main.py` | Interactive console: build the index, search, ask a question, or chat. |
+| `app.py` | Streamlit web UI: a browser chat page over the same RAG. |
 
 > The `utils/*.py` files are libraries imported by `main.py`. Running them directly
 > does nothing on their own — use `main.py`.
@@ -61,8 +65,10 @@ local-rag-solution/
 
 `process_documents_folder()` orchestrates four steps:
 
-1. **`clear_chroma_db()`** — deletes `data/chroma_db/` so each run rebuilds from
-   scratch (no stale or duplicate chunks). Simple and predictable for a small corpus.
+1. **`clear_chroma_db()`** — deletes the existing collection via the ChromaDB
+   client API so the index rebuilds cleanly (no stale or duplicate chunks). Using
+   the API rather than removing files keeps it safe in long-running processes like
+   the Streamlit app, where the client is cached in memory.
 2. **`load_documents_from_folder(folder)`** — walks the folder with
    `Path.rglob('*')` and reads `.md` files into a list of strings.
 3. **`chunk_documents(docs)`** — runs each document through
@@ -86,7 +92,7 @@ For each chunk the collection holds three aligned things: an **id**
 ### Search — `utils/document_search.py`
 
 ```python
-client = chromadb.PersistentClient(path="./data/chroma_db")
+client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
 collection = client.get_collection(settings.COLLECTION_NAME)
 q  = settings.format_query(query)                # prepends the mxbai query prefix
 qv = embeddings_model.embed_query(q)             # 1024-float vector

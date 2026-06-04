@@ -24,8 +24,8 @@
 | `ModuleNotFoundError: No module named 'config'` | Run from the project root, e.g. `uv run python main.py`. |
 | ChromaDB dimension mismatch | Delete `data/chroma_db/` and re-run ingestion (the embedding shape changed). |
 | First run is slow | The embedding model downloads once (~640 MB); later runs are offline. |
-| Generation / UI commands "don't work yet" | Those land in tasks 03–04 — see the [status table](README.md#status-at-a-glance). |
-| Ollama errors (task 03+) | Make sure `ollama serve` is running and the model is pulled (`ollama pull llama3.1:8b`). |
+| Chat UI won't open | Start it with `uv run streamlit run app.py`; it serves at `http://localhost:8501`. |
+| Ollama errors | Make sure Ollama is running and the model is pulled (`ollama pull llama3.1:8b`). On macOS Ollama usually runs in the background — `ollama serve` may report the port is already in use, which is fine. |
 
 ## Configuration reference
 
@@ -52,6 +52,7 @@ All settings live in `config/settings.py`.
 | `process_documents_folder(folder_path, collection_name)` | the ChromaDB collection | ✅ |
 | `search_documents(query, n_results)` | `{"query", "chunks"}` | ✅ [task 02](../tasks/02-search-returns-results.md) |
 | `answer_question(query, n_results)` | `{"answer", "contexts"}` | ✅ [task 03](../tasks/03-local-llm-generation.md) |
+| `get_index_status()` | `{"exists", "count"}` | ✅ |
 
 ## Where to go next
 

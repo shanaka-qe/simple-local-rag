@@ -23,6 +23,8 @@ The first time, choose **1** to build the index, then **4** or **5** to ask
 questions. Building (option 1) is the only step that wipes and re-embeds — asking
 questions just reads the existing index.
 
+> Prefer a browser? See the [Chat UI guide](06-chat-ui.md) — `uv run streamlit run app.py`.
+
 ## Use your own documents
 
 1. Drop `.md` files into `data/documents/`.
@@ -66,7 +68,7 @@ search_documents(query, n_results=3)                    # -> {"query": ..., "chu
 
 | Choice | Why |
 |--------|-----|
-| Wipe-and-rebuild each run | Keeps the DB consistent with `data/documents/` with zero bookkeeping; fine at this scale. Incremental upserts only matter for a large, frequently-changing corpus. |
+| Wipe-and-rebuild on the build step | Keeps the index consistent with `data/documents/` with zero bookkeeping; fine at this scale. Incremental upserts only matter for a large, frequently-changing corpus. |
 | Cosine similarity | Standard for text embeddings — compares *direction* (meaning), not magnitude. |
 | `chunk_size=500` / `overlap=100` | A practical default: small enough for precise hits, with 20% overlap so boundary-spanning ideas survive. |
 | mxbai query prefix | The model is asymmetric — prefixing the query is how it was trained for retrieval. |

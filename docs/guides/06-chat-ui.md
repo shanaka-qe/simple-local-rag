@@ -2,7 +2,7 @@
 
 ← [Local LLM generation](05-generation.md) · [Guides index](README.md) · next → [Evaluation](07-evaluation.md)
 
-> **Status: 🚧 planned** — build it with [task 04](../tasks/04-streamlit-chat-ui.md).
+> **Status: ✅ done** — implemented in `app.py` ([task 04](../tasks/04-streamlit-chat-ui.md)).
 
 ## What this area adds
 
@@ -39,11 +39,10 @@ uv run streamlit run app.py
 - How to wrap a Python pipeline in a usable interface with very little code.
 - Why showing **sources** matters for trust — you can see *what* the answer used.
 
-## Under the hood (intended design)
+## Under the hood
 
-> Built in [task 04](../tasks/04-streamlit-chat-ui.md); this is the planned shape.
-
-`app.py` skeleton:
+`app.py` outline (the real file also adds a sidebar with index status and a
+build/rebuild button):
 
 ```python
 import streamlit as st
@@ -73,8 +72,11 @@ Technical notes:
 
 - **`st.session_state`** persists the conversation across Streamlit's
   rerun-on-every-interaction model (the whole script re-executes on each input).
-- Wrap expensive setup (loading the embedding model, connecting to Chroma) in a
-  `@st.cache_resource` function so it runs **once**, not on every keystroke.
+- The embedding model is loaded **once** and reused via an `lru_cache` in
+  `utils/document_search.py`, so the UI stays responsive without reloading it on
+  every interaction.
+- The **sidebar** shows index status and a **Build / rebuild** button; the build
+  and answer calls are wrapped so a failure shows a friendly message, not a traceback.
 - `uv run streamlit run app.py` serves the page at `http://localhost:8501`.
 
 → Next: [Evaluation](07-evaluation.md)
