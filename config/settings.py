@@ -21,9 +21,7 @@ class Settings:
     CHUNK_SIZE = 500  # Smaller chunks for better processing
     CHUNK_OVERLAP = 100
     
-    # Local Llama model
-    LLM_MODEL_PATH = "./models/llama"  # Path to your Llama model
-    LLM_DEVICE = "cpu"
+    # Local LLM
     LLM_TEMPERATURE = 0.7
     LLM_MAX_TOKENS = 512
     
@@ -46,10 +44,6 @@ Answer:"""
     def get_embedding_model(self):
         """Get embedding model name"""
         return self.EMBEDDING_MODEL
-    
-    def get_llm_model_path(self):
-        """Get LLM model path"""
-        return self.LLM_MODEL_PATH
     
     def format_query(self, query):
         """Format query for mxbai model"""

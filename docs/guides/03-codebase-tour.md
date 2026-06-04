@@ -64,23 +64,18 @@ local-rag-solution/
 1. **`clear_chroma_db()`** — deletes `data/chroma_db/` so each run rebuilds from
    scratch (no stale or duplicate chunks). Simple and predictable for a small corpus.
 2. **`load_documents_from_folder(folder)`** — walks the folder with
-   `Path.rglob('*')` and reads supported files into a list of strings.
-   > 🚧 Today it accepts `.pdf`, `.txt`, `.md` (PDFs via `PyMuPDFLoader`, falling
-   > back to `PyPDFLoader`). [Task 01](../tasks/01-simplify-rag-core.md) removes the
-   > PDF path and restricts this to `.md`.
+   `Path.rglob('*')` and reads `.md` files into a list of strings.
 3. **`chunk_documents(docs)`** — runs each document through
    `CharacterTextSplitter(chunk_size=500, chunk_overlap=100)` and flattens the
    result into one list of chunk strings.
 4. **`create_embeddings_and_save(chunks)`** — the core:
    ```python
-   client = chromadb.PersistentClient(path="./data/chroma_db")
+   client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
    collection = client.create_collection(name, metadata={"hnsw:space": "cosine"})
    embeddings_model = HuggingFaceEmbeddings(model_name=..., model_kwargs={"device": "cpu"})
    vectors = embeddings_model.embed_documents(chunks)   # list[list[float]], each len 1024
    collection.add(documents=chunks, embeddings=vectors, ids=[f"chunk_{i}" for i, _ in enumerate(chunks)])
    ```
-   > 🚧 The path is hardcoded; [task 01](../tasks/01-simplify-rag-core.md) routes it
-   > through `settings.CHROMA_DIR`.
 
 ### What ChromaDB stores
 
@@ -106,7 +101,8 @@ results = collection.query(query_embeddings=[qv], n_results=n)
 | `results["distances"][0]` | `list[float]` | cosine distance (smaller = closer) |
 | `results["ids"][0]` | `list[str]` | the chunk ids |
 
-> 🚧 `search_documents()` currently *prints* these;
-> [task 02](../tasks/02-search-returns-results.md) makes it *return* them.
+> `search_documents()` returns these as `{"query", "chunks"}`
+> (see [task 02](../tasks/02-search-returns-results.md)); pass `verbose=True` to
+> also print them.
 
 → Next: [Using the RAG](04-using-the-rag.md)

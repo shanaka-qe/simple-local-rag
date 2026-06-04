@@ -52,7 +52,7 @@ All settings live in `config/settings.py`.
 | Function | Returns | Status |
 |----------|---------|--------|
 | `process_documents_folder(folder_path, collection_name)` | the ChromaDB collection | ✅ |
-| `search_documents(query, n_results)` | `{"query", "chunks"}` | ✅ (returns data after [task 02](../tasks/02-search-returns-results.md)) |
+| `search_documents(query, n_results)` | `{"query", "chunks"}` | ✅ [task 02](../tasks/02-search-returns-results.md) |
 | `answer_question(query, n_results)` | `{"answer", "contexts"}` | 🚧 [task 03](../tasks/03-local-llm-generation.md) |
 
 ## Where to go next

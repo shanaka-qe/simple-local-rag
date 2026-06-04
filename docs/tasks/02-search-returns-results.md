@@ -1,14 +1,16 @@
 # 02 — Make search return results
 
+**Status: ✅ Completed**
+
 **Goal:** `search_documents()` currently *prints* its results. Make it *return*
 them so the UI and the eval tools can use the output programmatically.
 
 ## Steps
 
-- [ ] Change `search_documents()` to return a structured result, e.g.:
+- [x] Change `search_documents()` to return a structured result:
       `{"query": str, "chunks": list[str]}` (the retrieved chunk texts).
-- [ ] Keep printing optional (e.g. a `verbose=True` flag) so `main.py` still reads nicely.
-- [ ] Update `main.py` to use the returned value instead of relying on prints.
+- [x] Keep printing optional (a `verbose=True` flag) so it can still be inspected on the console.
+- [x] Update `main.py` to use the returned value instead of relying on prints.
 
 ## Files
 

@@ -15,12 +15,7 @@ dependencies = [
     "transformers>=4.44.0",
     "torch>=2.4.0",
     
-    # Simple vector store (no database needed!)
-    "faiss-cpu>=1.7.4",
-    
-    # Document processing (simple)
-    "pypdf>=4.0.0",
-    "pymupdf>=1.23.0",
+    # Document processing
     "python-dotenv>=1.0.1",
     
     # Utilities

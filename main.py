@@ -18,19 +18,21 @@ def main():
         print("❌ No documents processed. Exiting.")
         return
     
-    # Step 2: Show collection info
-    print("\n🔍 Step 3: Testing search...")
-    
+    # Step 2: Test search using the returned results
+    print("\n🔍 Step 2: Testing search...")
+
     # Test different queries
     test_queries = [
-       "Who is Prof. Elena Rodriguez?",
-        "What are the requirements for the project?",
-        "What are the specifications?"
+        "What is the refund window in the returns policy?",
+        "Who is the lead scientist on Project Meridian?",
+        "What is Prof. Elena Rodriguez's research focus?"
     ]
-    
+
     for query in test_queries:
         print(f"\n--- Testing: {query} ---")
-        search_documents(query, n_results=2)
+        result = search_documents(query, n_results=2)
+        for i, chunk in enumerate(result["chunks"], start=1):
+            print(f"  {i}. {chunk[:300]}...")
     
     print("\n🎉 RAG system test completed!")
 

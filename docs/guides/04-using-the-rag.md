@@ -49,7 +49,7 @@ from utils import process_documents_folder, search_documents
 
 process_documents_folder(folder_path="./data/documents",
                          collection_name="documents")   # builds the DB, returns the collection
-search_documents(query, n_results=3)                    # prints matches (returns a dict after task 02)
+search_documents(query, n_results=3)                    # -> {"query": ..., "chunks": [...]}
 ```
 
 ### Design rationale
