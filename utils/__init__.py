@@ -12,9 +12,14 @@ from .document_search import (
     search_documents
 )
 
+from .rag import (
+    answer_question
+)
+
 __all__ = [
     "process_documents_folder",
     "clear_chroma_db",
     "load_documents_from_folder",
-    "search_documents"
+    "search_documents",
+    "answer_question"
 ]

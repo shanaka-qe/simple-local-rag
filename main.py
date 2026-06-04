@@ -2,7 +2,7 @@
 Simple RAG
 """
 
-from utils import process_documents_folder, search_documents
+from utils import process_documents_folder, answer_question
 
 
 def main():
@@ -18,8 +18,8 @@ def main():
         print("❌ No documents processed. Exiting.")
         return
     
-    # Step 2: Test search using the returned results
-    print("\n🔍 Step 2: Testing search...")
+    # Step 2: Ask questions — retrieve context and generate an answer
+    print("\n🔍 Step 2: Testing question answering...")
 
     # Test different queries
     test_queries = [
@@ -30,9 +30,9 @@ def main():
 
     for query in test_queries:
         print(f"\n--- Testing: {query} ---")
-        result = search_documents(query, n_results=2)
-        for i, chunk in enumerate(result["chunks"], start=1):
-            print(f"  {i}. {chunk[:300]}...")
+        result = answer_question(query, n_results=2)
+        print(f"💬 Answer: {result['answer']}")
+        print(f"📚 (based on {len(result['contexts'])} retrieved chunks)")
     
     print("\n🎉 RAG system test completed!")
 

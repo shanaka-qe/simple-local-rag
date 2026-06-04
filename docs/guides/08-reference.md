@@ -41,11 +41,9 @@ All settings live in `config/settings.py`.
 | `CHUNK_OVERLAP` | `100` | Shared characters between neighbouring chunks |
 | `QUERY_PROMPT` | mxbai search prefix | Prepended to queries before embedding |
 | `RAG_PROMPT` | context/question template | Prompt sent to the LLM (task 03+) |
-| `OLLAMA_MODEL` 🚧 | `llama3.1:8b` | Local generation model (added in task 03) |
-| `OLLAMA_BASE_URL` 🚧 | `http://localhost:11434` | Ollama server (added in task 03) |
-| `LLM_TEMPERATURE` 🚧 | `0.7` | Sampling temperature (added in task 03) |
-
-🚧 = introduced by a planned task.
+| `OLLAMA_MODEL` | `llama3.1:8b` | Local generation model |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server |
+| `LLM_TEMPERATURE` | `0.7` | Sampling temperature |
 
 ## Function reference
 
@@ -53,7 +51,7 @@ All settings live in `config/settings.py`.
 |----------|---------|--------|
 | `process_documents_folder(folder_path, collection_name)` | the ChromaDB collection | ✅ |
 | `search_documents(query, n_results)` | `{"query", "chunks"}` | ✅ [task 02](../tasks/02-search-returns-results.md) |
-| `answer_question(query, n_results)` | `{"answer", "contexts"}` | 🚧 [task 03](../tasks/03-local-llm-generation.md) |
+| `answer_question(query, n_results)` | `{"answer", "contexts"}` | ✅ [task 03](../tasks/03-local-llm-generation.md) |
 
 ## Where to go next
 

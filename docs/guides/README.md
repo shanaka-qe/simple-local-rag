@@ -31,7 +31,7 @@ the *how*.
 | Ingestion + embeddings + ChromaDB | ✅ available | — |
 | Simplify to `.md` only | ✅ done | [01](../tasks/01-simplify-rag-core.md) |
 | Search returns data | ✅ done | [02](../tasks/02-search-returns-results.md) |
-| Local LLM generation | 🚧 planned | [03](../tasks/03-local-llm-generation.md) |
+| Local LLM generation | ✅ done | [03](../tasks/03-local-llm-generation.md) |
 | Streamlit chat UI | 🚧 planned | [04](../tasks/04-streamlit-chat-ui.md) |
 | Golden dataset | 🚧 planned | [05](../tasks/05-golden-dataset.md) |
 | Evals (promptfoo/DeepEval/Ragas) | 🚧 planned | [06](../tasks/06-evals-promptfoo.md) · [07](../tasks/07-evals-deepeval.md) · [08](../tasks/08-evals-ragas.md) |

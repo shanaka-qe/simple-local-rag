@@ -1,5 +1,7 @@
 # 03 — Add local LLM generation
 
+**Status: ✅ Completed**
+
 **Goal:** Complete the RAG loop — take the retrieved chunks, send them to a local
 Ollama model with the question, and return a written answer.
 
@@ -9,15 +11,15 @@ Ollama model with the question, and return a written answer.
 
 ## Steps
 
-- [ ] Add deps: `uv add langchain-ollama ollama`.
-- [ ] Add Ollama settings to `config/settings.py`
+- [x] Add deps: `uv add langchain-ollama ollama`.
+- [x] Add Ollama settings to `config/settings.py`
       (`OLLAMA_MODEL = "llama3.1:8b"`, `OLLAMA_BASE_URL`, temperature).
-- [ ] Add a small `utils/rag.py` with an `answer_question(query)` that:
+- [x] Add a small `utils/rag.py` with an `answer_question(query)` that:
       1. retrieves chunks (task 02), 2. fills the `RAG_PROMPT` template with the
       chunks as context, 3. calls the Ollama model, 4. returns
       `{"answer": str, "contexts": list[str]}`.
-- [ ] Export `answer_question` from `utils/__init__.py`.
-- [ ] Update `main.py` to print a real answer for each test question.
+- [x] Export `answer_question` from `utils/__init__.py`.
+- [x] Update `main.py` to print a real answer for each test question.
 
 ## Files
 

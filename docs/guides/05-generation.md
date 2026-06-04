@@ -2,7 +2,7 @@
 
 ← [Using the RAG](04-using-the-rag.md) · [Guides index](README.md) · next → [Chat UI](06-chat-ui.md)
 
-> **Status: 🚧 planned** — build it with [task 03](../tasks/03-local-llm-generation.md).
+> **Status: ✅ done** — implemented in [task 03](../tasks/03-local-llm-generation.md).
 
 ## What this area adds
 
@@ -42,12 +42,9 @@ default is `llama3.1:8b`; you can swap in any model you've pulled.
 - Why returning `{answer, contexts}` matters: the UI and every eval tool need it.
 - The difference between *retrieval* quality and *answer* quality.
 
-## Under the hood (intended design)
+## Under the hood
 
-> The code lands in [task 03](../tasks/03-local-llm-generation.md); this is the
-> planned shape, kept in step with that task.
-
-A new module `utils/rag.py` exposes one function:
+The module `utils/rag.py` exposes one function:
 
 ```python
 def answer_question(query: str, n_results: int = 3) -> dict:
