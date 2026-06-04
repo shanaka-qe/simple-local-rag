@@ -1,20 +1,33 @@
 # 06 — Evals with promptfoo
 
+**Status: ✅ Completed**
+
 **Goal:** Learn promptfoo — a YAML-driven eval runner (Node) — against the RAG.
 Good first eval tool: simple, mostly deterministic assertions.
 
 ## Prerequisites
 
-- Node + `npx` available. Dataset from task 05.
+- Node + `npx` available. Dataset from task 05. Index built.
 
 ## Steps
 
-- [ ] Create `eval/promptfoo/promptfooconfig.yaml`:
-      - provider: `ollama:chat:llama3.1:8b` (local), embeddings provider local too.
-      - tests built from `dataset.yaml`.
-      - assertions: `contains` (key facts), `is-json` where relevant, and one or
-        two `llm-rubric` model-graded checks (judge = the local Ollama model).
-- [ ] Run: `npx promptfoo eval` then `npx promptfoo view` to see results.
+- [x] Add a custom Python provider (`eval/promptfoo/rag_provider.py`) so promptfoo
+      evaluates the real RAG (`answer_question`), not just the bare LLM.
+- [x] Generate tests from the golden dataset (`generate_tests.py`) — single source
+      of truth, no duplicated test file.
+- [x] `promptfooconfig.yaml`: custom provider + `llm-rubric` grader routed to the
+      local Ollama model (`defaultTest.options.provider.text`).
+- [x] Assertions: `icontains` (key facts, deterministic) + `llm-rubric` (grounded /
+      declines, judged locally).
+- [x] Run from repo root:
+      `PROMPTFOO_PYTHON="$PWD/.venv/bin/python" npx -y promptfoo@latest eval -c eval/promptfoo/promptfooconfig.yaml`
+      then `npx -y promptfoo@latest view`.
+
+## Notes
+
+- Verified end-to-end on a subset: deterministic checks pass and the local Ollama
+  grader runs (no API key, no network).
+- See `eval/promptfoo/README.md` for the full run instructions.
 
 ## Files
 

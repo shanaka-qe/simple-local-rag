@@ -73,24 +73,27 @@ different chunk, so the cases use the header's `QCR-LAB-9847` instead). The file
 also includes 2 `answerable: false` cases to test that the RAG declines rather
 than invents an answer.
 
-### promptfoo (task 06)
+### promptfoo (task 06 — ✅ built: `eval/promptfoo/`)
 
-YAML config; the provider points at local Ollama; assertions mix deterministic and
-model-graded:
+A **custom Python provider** runs the real RAG (`answer_question`), so promptfoo
+evaluates the whole pipeline, not just the bare LLM. Test cases are generated from
+the golden dataset, and the `llm-rubric` judge is routed to the **local** Ollama
+model:
 
 ```yaml
-providers: [ollama:chat:llama3.1:8b]
-tests:
-  - vars: { question: "Who leads the quantum computing lab?" }
-    assert:
-      - type: contains
-        value: "Elena Rodriguez"
-      - type: llm-rubric                 # judged by the same local model
-        value: "Answer is grounded in the provided context"
+providers:
+  - id: file://rag_provider.py          # runs the real RAG (retrieve + generate)
+defaultTest:
+  options:
+    provider:
+      text: { id: ollama:chat:llama3.1:8b }   # local judge for llm-rubric
+tests: file://generate_tests.py:create_tests  # built from eval/dataset.yaml
 ```
 
-Deterministic asserts (`contains`, `is-json`, `equals`) cost nothing and never
-flake; `llm-rubric` uses the local model as judge. Run with `npx promptfoo eval`.
+Each test mixes a deterministic `icontains` (does the answer contain the key
+fact?) with a model-graded `llm-rubric` (is it grounded / does it decline?).
+Deterministic asserts never flake; `llm-rubric` uses the local model as judge.
+Run with `npx promptfoo eval` (see `eval/promptfoo/README.md`).
 
 ### DeepEval (task 07)
 

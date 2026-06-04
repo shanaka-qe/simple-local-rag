@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
+#
+# Evaluate the local RAG with promptfoo — fully local.
+#   - the RAG (retrieve + generate) runs via the custom Python provider
+#   - model-graded assertions (llm-rubric) are judged by the local Ollama model
+#   - test cases are generated from the shared golden dataset (eval/dataset.yaml)
+#
+# Run from the repo root (build the index first if needed):
+#   uv run python -c "from utils import process_documents_folder; process_documents_folder()"
+#   PROMPTFOO_PYTHON="$PWD/.venv/bin/python" npx -y promptfoo@latest eval -c eval/promptfoo/promptfooconfig.yaml
+#   npx -y promptfoo@latest view
+
+description: Local RAG evaluation
+
+# The provider receives this rendered prompt — just the question.
+prompts:
+  - "{{question}}"
+
+# Custom provider: runs the real RAG pipeline.
+providers:
+  - id: file://rag_provider.py
+    label: local-rag
+
+# Route model-graded assertions (llm-rubric) to the local Ollama model,
+# so nothing leaves the machine and no API key is needed.
+defaultTest:
+  options:
+    provider:
+      text:
+        id: ollama:chat:llama3.1:8b
+        config:
+          temperature: 0.1
+
+# Test cases come from the golden dataset.
+tests: file://generate_tests.py:create_tests
