@@ -1,133 +1,39 @@
 # Local RAG Solution
 
-**Author:** Shanaka Fernando  
-**LinkedIn:** https://www.linkedin.com/in/shanaka-qe/
+**Author:** Shanaka Fernando · **LinkedIn:** https://www.linkedin.com/in/shanaka-qe/
 
-A simple, local Retrieval-Augmented Generation (RAG) system built with LangChain, ChromaDB, and local Llama models. This project demonstrates how to create a complete RAG pipeline for document processing and intelligent search.
+A hands-on learning project: build a small **Retrieval-Augmented Generation (RAG)**
+system that runs **entirely on your own machine** — local embeddings, a local
+vector database (ChromaDB), and a local LLM (Ollama) — then **evaluate** it with
+promptfoo, DeepEval, and Ragas. No cloud accounts, no API keys, no cost.
 
-## 🚀 Features
+## What you'll learn
 
-- **Local Document Processing**: Supports PDF, TXT, and Markdown files
-- **Advanced Embeddings**: Uses mxbai-embed-large-v1 for high-quality vector representations
-- **Persistent Storage**: ChromaDB for local vector database storage
-- **Intelligent Search**: Semantic search with similarity scoring
-- **Modular Design**: Clean, organized codebase with utility functions
-- **No Docker Required**: Everything runs locally with Python
+- How RAG works: retrieval (embeddings + vector search) and generation (a local LLM)
+- Running models locally with HuggingFace embeddings and Ollama
+- Chatting with your own documents through a simple web UI
+- Measuring RAG quality with three different evaluation tools
 
-## 📁 Project Structure
+## Quick start
 
-```
-local-rag-solution/
-├── config/
-│   └── settings.py              # Configuration settings
-├── utils/
-│   ├── __init__.py              # Package initialization
-│   ├── document_processor.py    # Document processing utilities
-│   └── document_search.py       # Search utilities
-├── data/
-│   ├── documents/               # Your documents go here (sample files included)
-│   └── chroma_db/              # ChromaDB storage (auto-created)
-├── main.py                     # Main application
-├── pyproject.toml             # Dependencies
-└── README.md                   # This file
-```
-
-## 📖 Getting Started
-
-**For detailed setup and usage instructions, see [USER_GUIDE.md](USER_GUIDE.md)**
-
-### Quick Start
 ```bash
-# Clone and install
-git clone <your-repo-url>
-cd local-rag-solution
-uv sync
-
-# Add your documents to data/documents/
-# Process documents
-python utils/document_processor.py
-
-# Test search
-python utils/document_search.py
-
-# Run full pipeline
-python main.py
+uv sync                       # install dependencies
+ollama pull llama3.1:8b       # local model (used from the generation step on)
+uv run python main.py         # ingest the sample docs and run example searches
 ```
 
-## 🔧 Configuration
+> The first run downloads the embedding model once (~640 MB); after that it runs
+> fully offline.
 
-Edit `config/settings.py` to customize:
+## Documentation
 
-```python
-# Embedding model
-EMBEDDING_MODEL = "mixedbread-ai/mxbai-embed-large-v1"
+| | |
+|---|---|
+| 📖 **User guide** | [`docs/guides/`](docs/guides/README.md) — concepts, setup, codebase tour, and each area explained |
+| 🛠️ **Build roadmap** | [`docs/tasks/`](docs/tasks/README.md) — the project built one task at a time |
 
-# Document processing
-CHUNK_SIZE = 500          # Characters per chunk
-CHUNK_OVERLAP = 100       # Overlap between chunks
+Start with the [guides index](docs/guides/README.md).
 
-# Search settings
-COLLECTION_NAME = "documents"
-```
+## License
 
-
-## 🧠 How It Works
-
-### 1. Document Processing
-- **Load documents** from `data/documents/` folder
-- **Extract text** from PDFs using PyMuPDFLoader
-- **Split into chunks** using CharacterTextSplitter
-- **Create embeddings** using mxbai-embed-large-v1
-- **Store in ChromaDB** for fast retrieval
-
-### 2. Search Process
-- **Convert query** to embedding using same model
-- **Search ChromaDB** for similar chunks
-- **Return ranked results** with similarity scores
-
-### 3. RAG Pipeline
-```
-Documents → Chunks → Embeddings → ChromaDB → Search → Results
-```
-
-## 📊 Performance
-
-- **Embedding Model**: mxbai-embed-large-v1 (1024 dimensions)
-- **Vector Database**: ChromaDB with HNSW indexing
-- **Search Speed**: Sub-second retrieval
-- **Storage**: Local disk persistence
-
-## 🔧 Dependencies
-
-- **langchain**: Framework for LLM applications
-- **chromadb**: Vector database
-- **sentence-transformers**: Embedding models
-- **pymupdf**: PDF processing
-- **transformers**: Hugging Face models
-- **torch**: PyTorch backend
-
-## 🚀 Next Steps
-
-1. **Add Llama Model**: Integrate local Llama model for text generation
-2. **Web Interface**: Build a simple web UI for document search
-3. **Advanced Search**: Implement query expansion and re-ranking
-4. **Batch Processing**: Handle large document collections
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
-## 🙏 Acknowledgments
-
-- **LangChain** for the RAG framework
-- **ChromaDB** for vector storage
-- **Hugging Face** for embedding models
-- **Mixedbread AI** for mxbai embeddings
+MIT

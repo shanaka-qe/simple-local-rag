@@ -1,0 +1,112 @@
+# 03 — Codebase tour
+
+← [Setup](02-setup.md) · [Guides index](README.md) · next → [Using the RAG](04-using-the-rag.md)
+
+## Architecture
+
+```
+  data/documents/*.md
+        │  load
+        ▼
+     chunk (≈500 chars)
+        │  embed  (HuggingFace mxbai — local, free)
+        ▼
+     ChromaDB  (local, persistent, cosine similarity)
+        │
+   question ──embed──► search ──► top matching chunks
+        │                               │
+        │                       prompt template
+        ▼                               ▼
+   Streamlit chat UI ◄──── answer ◄── local LLM (Ollama)
+                                        │
+            evaluation ─────────────────┘
+            promptfoo · DeepEval · Ragas
+```
+
+Everything in this diagram runs locally.
+
+## Folder layout
+
+```
+local-rag-solution/
+├── main.py                      # demo runner: ingest docs, then test searches
+├── config/
+│   └── settings.py              # all settings in one place
+├── utils/
+│   ├── document_processor.py    # load → chunk → embed → store (builds the DB)
+│   └── document_search.py       # turn a question into a search over the DB
+├── data/
+│   ├── documents/               # put your .md files here
+│   └── chroma_db/               # the vector database (auto-created, git-ignored)
+└── docs/
+    ├── guides/                  # these guides
+    └── tasks/                   # the build roadmap
+```
+
+## What each file does
+
+| File | Plain-English job |
+|------|-------------------|
+| `config/settings.py` | One place for every setting: embedding model, chunk size (500) / overlap (100), where ChromaDB lives, the collection name, prompt templates. |
+| `utils/document_processor.py` | The ingestion pipeline: read files → split into chunks → create embeddings → save to ChromaDB. Wipes and rebuilds the DB on each run. |
+| `utils/document_search.py` | Takes a question, embeds it, asks ChromaDB for the closest chunks. |
+| `main.py` | The "run button" — runs ingestion then a few example searches. |
+
+> The `utils/*.py` files are libraries imported by `main.py`. Running them directly
+> does nothing on their own — use `main.py`.
+
+## Under the hood
+
+### Ingestion — `utils/document_processor.py`
+
+`process_documents_folder()` orchestrates four steps:
+
+1. **`clear_chroma_db()`** — deletes `data/chroma_db/` so each run rebuilds from
+   scratch (no stale or duplicate chunks). Simple and predictable for a small corpus.
+2. **`load_documents_from_folder(folder)`** — walks the folder with
+   `Path.rglob('*')` and reads supported files into a list of strings.
+   > 🚧 Today it accepts `.pdf`, `.txt`, `.md` (PDFs via `PyMuPDFLoader`, falling
+   > back to `PyPDFLoader`). [Task 01](../tasks/01-simplify-rag-core.md) removes the
+   > PDF path and restricts this to `.md`.
+3. **`chunk_documents(docs)`** — runs each document through
+   `CharacterTextSplitter(chunk_size=500, chunk_overlap=100)` and flattens the
+   result into one list of chunk strings.
+4. **`create_embeddings_and_save(chunks)`** — the core:
+   ```python
+   client = chromadb.PersistentClient(path="./data/chroma_db")
+   collection = client.create_collection(name, metadata={"hnsw:space": "cosine"})
+   embeddings_model = HuggingFaceEmbeddings(model_name=..., model_kwargs={"device": "cpu"})
+   vectors = embeddings_model.embed_documents(chunks)   # list[list[float]], each len 1024
+   collection.add(documents=chunks, embeddings=vectors, ids=[f"chunk_{i}" for i, _ in enumerate(chunks)])
+   ```
+   > 🚧 The path is hardcoded; [task 01](../tasks/01-simplify-rag-core.md) routes it
+   > through `settings.CHROMA_DIR`.
+
+### What ChromaDB stores
+
+For each chunk the collection holds three aligned things: an **id**
+(`chunk_0`, `chunk_1`, …), the **document** (the chunk text), and its **embedding**
+(the 1024-float vector). Metadata is empty in this project.
+
+### Search — `utils/document_search.py`
+
+```python
+client = chromadb.PersistentClient(path="./data/chroma_db")
+collection = client.get_collection(settings.COLLECTION_NAME)
+q  = settings.format_query(query)                # prepends the mxbai query prefix
+qv = embeddings_model.embed_query(q)             # 1024-float vector
+results = collection.query(query_embeddings=[qv], n_results=n)
+```
+
+`results` is a dict of parallel lists, batched per query. The useful keys:
+
+| Key | Shape | Meaning |
+|-----|-------|---------|
+| `results["documents"][0]` | `list[str]` | the matched chunk texts, best first |
+| `results["distances"][0]` | `list[float]` | cosine distance (smaller = closer) |
+| `results["ids"][0]` | `list[str]` | the chunk ids |
+
+> 🚧 `search_documents()` currently *prints* these;
+> [task 02](../tasks/02-search-returns-results.md) makes it *return* them.
+
+→ Next: [Using the RAG](04-using-the-rag.md)
