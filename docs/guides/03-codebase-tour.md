@@ -29,7 +29,7 @@ Everything in this diagram runs locally.
 
 ```
 local-rag-solution/
-├── main.py                      # demo runner: ingest docs, then test searches
+├── main.py                      # interactive console (build index, search, ask, chat)
 ├── config/
 │   └── settings.py              # all settings in one place
 ├── utils/
@@ -50,7 +50,7 @@ local-rag-solution/
 | `config/settings.py` | One place for every setting: embedding model, chunk size (500) / overlap (100), where ChromaDB lives, the collection name, prompt templates. |
 | `utils/document_processor.py` | The ingestion pipeline: read files → split into chunks → create embeddings → save to ChromaDB. Wipes and rebuilds the DB on each run. |
 | `utils/document_search.py` | Takes a question, embeds it, asks ChromaDB for the closest chunks. |
-| `main.py` | The "run button" — runs ingestion then a few example searches. |
+| `main.py` | Interactive console: build the index, search, ask a question, or chat. |
 
 > The `utils/*.py` files are libraries imported by `main.py`. Running them directly
 > does nothing on their own — use `main.py`.

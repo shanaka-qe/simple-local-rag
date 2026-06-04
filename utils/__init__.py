@@ -9,7 +9,8 @@ from .document_processor import (
 )
 
 from .document_search import (
-    search_documents
+    search_documents,
+    get_index_status
 )
 
 from .rag import (
@@ -21,5 +22,6 @@ __all__ = [
     "clear_chroma_db",
     "load_documents_from_folder",
     "search_documents",
+    "get_index_status",
     "answer_question"
 ]

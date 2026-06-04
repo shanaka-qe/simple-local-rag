@@ -8,16 +8,26 @@
 uv run python main.py
 ```
 
-You'll see ingestion (load → chunk → embed → store) followed by a few example
-searches that print the most relevant chunks.
+This opens an interactive console:
+
+```
+  1) Build / rebuild the index from data/documents
+  2) Show index status
+  3) Search (show matching chunks, no answer)
+  4) Ask a single question
+  5) Chat (interactive)
+  0) Exit
+```
+
+The first time, choose **1** to build the index, then **4** or **5** to ask
+questions. Building (option 1) is the only step that wipes and re-embeds — asking
+questions just reads the existing index.
 
 ## Use your own documents
 
 1. Drop `.md` files into `data/documents/`.
-2. Re-run `uv run python main.py`.
-
-The database is wiped and rebuilt each run, so it always reflects the current
-contents of `data/documents/`.
+2. In the console, choose **1** to rebuild the index.
+3. Ask away with **4** (single question) or **5** (chat).
 
 ## Key settings
 

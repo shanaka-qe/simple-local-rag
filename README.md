@@ -19,7 +19,7 @@ promptfoo, DeepEval, and Ragas. No cloud accounts, no API keys, no cost.
 ```bash
 uv sync                       # install dependencies
 ollama pull llama3.1:8b       # local model (used from the generation step on)
-uv run python main.py         # ingest the sample docs and run example searches
+uv run python main.py         # open the interactive console (build index, search, chat)
 ```
 
 > The first run downloads the embedding model once (~640 MB); after that it runs
