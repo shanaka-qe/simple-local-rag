@@ -2,10 +2,10 @@
 
 ← [Chat UI](06-chat-ui.md) · [Guides index](README.md) · next → [Reference](08-reference.md)
 
-> **Status:** golden dataset ([05](../tasks/05-golden-dataset.md)), promptfoo
-> ([06](../tasks/06-evals-promptfoo.md)), and DeepEval
-> ([07](../tasks/07-evals-deepeval.md)) are ✅ built; Ragas
-> ([08](../tasks/08-evals-ragas.md)) is 🚧 planned.
+> **Status: ✅ built** — golden dataset ([05](../tasks/05-golden-dataset.md)),
+> promptfoo ([06](../tasks/06-evals-promptfoo.md)), DeepEval
+> ([07](../tasks/07-evals-deepeval.md)), and Ragas
+> ([08](../tasks/08-evals-ragas.md)).
 
 ## Why evaluate a RAG?
 
@@ -53,8 +53,8 @@ local-judged scores as directional, not absolute.
 
 ## Under the hood
 
-> Golden dataset (05), promptfoo (06), and DeepEval (07) are **✅ built** below;
-> Ragas ([task 08](../tasks/08-evals-ragas.md)) is the remaining planned one.
+> All four eval pieces are **✅ built** below: golden dataset (05), promptfoo (06),
+> DeepEval (07), and Ragas (08).
 
 ### Golden dataset (task 05 — ✅ built: `eval/dataset.yaml`)
 
@@ -129,31 +129,38 @@ Run with `uv run deepeval test run eval/deepeval/test_rag.py`. Expect answer
 -relevancy to sometimes dip below threshold with a small local judge — the
 local-judge trade-off (see the local-judge note above).
 
-### Ragas (task 08)
+### Ragas (task 08 — ✅ built: `eval/ragas/run_ragas.py`)
 
-Metrics over a dataset, with local LLM + embeddings wrappers so nothing leaves
-your machine:
+Not pytest or YAML — you build a dataset, run `evaluate(...)`, and read a scores
+table. Local LLM + local embeddings, so nothing leaves your machine:
 
 ```python
-from ragas import evaluate
-from ragas.metrics import faithfulness, answer_relevancy, context_precision, context_recall
+from ragas import EvaluationDataset, evaluate
+from ragas.metrics import (Faithfulness, ResponseRelevancy,
+                           LLMContextPrecisionWithReference, LLMContextRecall)
 from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from langchain_ollama import ChatOllama
 
-judge = LangchainLLMWrapper(ChatOllama(model="llama3.1:8b"))
-emb   = LangchainEmbeddingsWrapper(hf_embeddings)   # the same local embeddings
-# dataset rows: question, answer, contexts, ground_truth
+# rows: user_input, response, retrieved_contexts, reference (ground truth)
+dataset = EvaluationDataset.from_list([...])
+judge   = LangchainLLMWrapper(ChatOllama(model="llama3.1:8b"))
+emb     = LangchainEmbeddingsWrapper(local_embeddings)
 evaluate(dataset,
-         metrics=[faithfulness, answer_relevancy, context_precision, context_recall],
+         metrics=[LLMContextPrecisionWithReference(), LLMContextRecall(),
+                  Faithfulness(), ResponseRelevancy()],
          llm=judge, embeddings=emb)
 ```
 
-| Metric | Judges | Needs |
+| Metric | Judges | Layer |
 |--------|--------|-------|
-| `context_precision` / `context_recall` | retrieval | ground-truth + retrieved contexts |
-| `faithfulness` | answer vs. contexts | answer + contexts |
-| `answer_relevancy` | answer vs. question | answer + embeddings |
+| `LLMContextPrecisionWithReference` / `LLMContextRecall` | were the right/enough chunks retrieved? | **retrieval** |
+| `Faithfulness` | answer supported by the contexts? | **answer** |
+| `ResponseRelevancy` | answer addresses the question? | **answer** |
+
+Ragas's value is this split: a low **retrieval** score vs. a low **answer** score
+point you at different fixes. (Ragas is migrating its API in v1.0 — see
+`eval/ragas/README.md`.)
 
 All three route their "judge" to the local model — recall the trade-off above:
 treat local-judged scores as directional, not absolute.

@@ -24,6 +24,6 @@ chat with and evaluate. Each task is self-contained — do them in order.
 | 05 | [Build a golden eval dataset](05-golden-dataset.md) | ✅ done | 03 |
 | 06 | [Evals with promptfoo](06-evals-promptfoo.md) | ✅ done | 05 |
 | 07 | [Evals with DeepEval](07-evals-deepeval.md) | ✅ done | 05 |
-| 08 | [Evals with Ragas](08-evals-ragas.md) | 🚧 todo | 05 |
+| 08 | [Evals with Ragas](08-evals-ragas.md) | ✅ done | 05 |
 
 Tasks 06–08 are independent of each other — pick any order once 05 is done.
