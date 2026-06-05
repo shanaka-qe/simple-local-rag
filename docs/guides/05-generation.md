@@ -77,15 +77,26 @@ OLLAMA_BASE_URL = "http://localhost:11434"
 LLM_TEMPERATURE = 0.7
 ```
 
-The existing `RAG_PROMPT` template is reused as-is:
+The `RAG_PROMPT` template tells the model to answer **only** from the context, in a
+**complete sentence**, and to **decline** when the answer isn't there:
 
 ```
-Context: {context}
+Answer the question using only the context below. Reply in one complete sentence
+that restates the key fact. If the answer is not in the context, reply exactly:
+"I don't know based on the provided documents."
+
+Context:
+{context}
 
 Question: {question}
 
 Answer:
 ```
+
+Two reasons this wording matters: (1) "decline if not in the context" makes the RAG
+**honest** about gaps instead of inventing answers; (2) a **complete sentence**
+("The refund window is 30 days…") states the fact explicitly, which reads better
+*and* is easier for faithfulness evals to verify than a bare "30 days".
 
 Returning `contexts` alongside `answer` is deliberate: the UI renders them as
 *sources*, and the eval tools score the answer *against* them (faithfulness).

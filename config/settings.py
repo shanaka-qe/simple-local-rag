@@ -24,11 +24,16 @@ class Settings:
     # Local LLM (Ollama)
     OLLAMA_MODEL = "llama3.1:8b"
     OLLAMA_BASE_URL = "http://localhost:11434"
-    LLM_TEMPERATURE = 0.7
+    LLM_TEMPERATURE = 0.5
     LLM_MAX_TOKENS = 512
     
     # RAG prompt template
-    RAG_PROMPT = """Context: {context}
+    RAG_PROMPT = """Answer the question using only the context below. Reply in one
+complete sentence that restates the key fact. If the answer is not in the context,
+reply exactly: "I don't know based on the provided documents."
+
+Context:
+{context}
 
 Question: {question}
 

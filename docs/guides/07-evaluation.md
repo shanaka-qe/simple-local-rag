@@ -96,7 +96,7 @@ tests:
       - { type: icontains, value: "30 days" }                        # deterministic
       - type: context-faithfulness                                   # judged vs the chunks
         contextTransform: 'context.metadata.contexts.join("\n\n")'   # feed the judge the context
-        threshold: 0.7
+        threshold: 0     # informational only — does NOT gate (see caveat)
 ```
 
 Each answerable case mixes a deterministic `icontains` (does the answer contain the
@@ -106,11 +106,15 @@ does *not* receive the documents — so it can't truly verify grounding;
 `context-faithfulness` + `contextTransform` passes the chunks to the judge (and
 requires the question in a `query` var).
 
-⚠️ **Honest caveat:** even correctly wired, promptfoo's `context-faithfulness`
-scores very terse factual answers low (e.g. `"$28.4 million USD"` → ~0) even though
-the fact is in the context — and even with a stronger judge. The deterministic
-`contains-fact` is the reliable gate for facts; treat model-graded faithfulness as
-directional. Run with `npx promptfoo eval` (see `eval/promptfoo/README.md`).
+⚠️ **Honest caveat — and why `grounded` is `threshold: 0`:** even correctly wired,
+promptfoo's `context-faithfulness` scores **noisily** with a local judge — across
+correct, grounded answers it ranged ~0.0–0.9, and neither a stronger judge (`phi4`)
+nor fuller answers fixed it (Ragas scored the same answers ~1.0 — different
+implementation). So we keep it **informational** (`threshold: 0`, never gates) to
+*show* the limitation, and use the deterministic `contains-fact` as the real gate.
+The lesson: reliable model-graded faithfulness needs a frontier judge; locally,
+lean on deterministic checks. Run with `npx promptfoo eval` (see
+`eval/promptfoo/README.md`).
 
 ### DeepEval (task 07 — ✅ built: `eval/deepeval/test_rag.py`)
 

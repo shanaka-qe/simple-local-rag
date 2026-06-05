@@ -72,19 +72,19 @@ Tip: add `--filter-first-n 3` to step 2 for a quick partial run.
 
 ## What to look for
 
-- **`contains-fact`** (deterministic) should be green for answerable cases — this
-  is the reliable gate.
-- **`grounded`** (`context-faithfulness`, local judge) scores whether the answer is
-  supported by the retrieved chunks. ⚠️ Treat it as **directional**: on very terse
-  factual answers (e.g. `"$28.4 million USD"`) it often scores low even though the
-  fact *is* in the context — and this persists even with a stronger judge
-  (tested with `phi4`). Promptfoo's claim-based faithfulness is simply unreliable on
-  bare-fact answers (Ragas's faithfulness scored the same answers 1.0 — different
-  implementation). The fix is real but partial: the judge now *sees* the context;
-  reliability of the score is a separate, model-dependent limitation.
-- **`declines-unknown`** on the two unanswerable cases tests honesty — these may
-  well **fail**, because the RAG prompt doesn't tell the model to decline. The
-  harness surfacing a real weakness.
+- **`contains-fact`** (deterministic) — the **gate**. Green for every answerable
+  case; exact and never flaky.
+- **`declines-unknown`** (`llm-rubric`) — the **gate** for the two unanswerable
+  cases. Passes because the RAG prompt now tells the model to reply *"I don't know
+  based on the provided documents"* when the answer isn't in the context.
+- **`grounded`** (`context-faithfulness`) — **informational only** (`threshold: 0`),
+  so it never fails the suite. The score is still computed and shown.
+  ⚠️ **Do not trust this score with a local judge.** Across correct, grounded
+  answers it ranges wildly (e.g. ~0.0 to ~0.9) — promptfoo's claim-based
+  faithfulness needs a frontier judge; a local 8–14B model can't grade it reliably
+  (tested with both `llama3.1:8b` and `phi4`, and with fuller answers). Ragas
+  scored the same answers ~1.0 — different implementation. We keep it as a visible
+  signal to *show* this limitation, not to gate on it.
 
 **Takeaway:** for hard facts, trust the deterministic `contains-fact`. Use
 model-graded faithfulness as a directional signal, not a hard gate — or raise

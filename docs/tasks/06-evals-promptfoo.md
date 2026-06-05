@@ -18,10 +18,11 @@ Good first eval tool: simple, mostly deterministic assertions.
       whole suite is visible in one file).
 - [x] `promptfooconfig.yaml`: custom provider + `llm-rubric` grader routed to the
       local Ollama model (`defaultTest.options.provider.text`).
-- [x] Assertions: `icontains` (key facts, deterministic) + `context-faithfulness`
-      (answer supported by the retrieved chunks — fed to the judge via
-      `contextTransform`, with the question in a `query` var) + `llm-rubric` for the
-      "should decline" honesty cases.
+- [x] Assertions: `icontains` (key facts, deterministic — the gate) + `llm-rubric`
+      for the "should decline" honesty cases. Plus `context-faithfulness` (chunks fed
+      to the judge via `contextTransform`, question in a `query` var) kept as an
+      **informational** metric (`threshold: 0`) — a local judge grades faithfulness
+      too noisily to gate on.
 - [x] Run from repo root:
       `PROMPTFOO_PYTHON="$PWD/.venv/bin/python" npx -y promptfoo@latest eval -c eval/promptfoo/promptfooconfig.yaml`
       then `npx -y promptfoo@latest view`.
