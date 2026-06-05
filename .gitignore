@@ -23,3 +23,6 @@ data/chroma_db/
 .promptfoo/
 eval/promptfoo/output*
 
+# deepeval local config / cache / telemetry
+.deepeval*
+

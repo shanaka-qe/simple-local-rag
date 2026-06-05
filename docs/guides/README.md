@@ -38,7 +38,8 @@ the *how*.
 | Streamlit chat UI | ✅ done | [04](../tasks/04-streamlit-chat-ui.md) |
 | Golden dataset | ✅ done | [05](../tasks/05-golden-dataset.md) |
 | Evals — promptfoo | ✅ done | [06](../tasks/06-evals-promptfoo.md) |
-| Evals — DeepEval / Ragas | 🚧 planned | [07](../tasks/07-evals-deepeval.md) · [08](../tasks/08-evals-ragas.md) |
+| Evals — DeepEval | ✅ done | [07](../tasks/07-evals-deepeval.md) |
+| Evals — Ragas | 🚧 planned | [08](../tasks/08-evals-ragas.md) |
 
 Today the project does the **retrieval half** (embed → store → search). Generation,
 UI, and evals are what you'll add as you work through the tasks.

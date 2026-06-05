@@ -1,9 +1,12 @@
 # yaml-language-server: $schema=https://promptfoo.dev/config-schema.json
 #
-# Evaluate the local RAG with promptfoo — fully local.
-#   - the RAG (retrieve + generate) runs via the custom Python provider
-#   - model-graded assertions (llm-rubric) are judged by the local Ollama model
-#   - test cases are generated from the shared golden dataset (eval/dataset.yaml)
+# Evaluate the local RAG with promptfoo — fully local, declarative tests.
+#
+# The anatomy of a promptfoo config (the principles):
+#   prompts      what gets sent to the provider (here, just the question)
+#   providers    what produces the answer (here, our real RAG via a Python provider)
+#   defaultTest  options shared by all tests — incl. the judge for model-graded checks
+#   tests        a list of cases; each has `vars` (inputs) + `assert` (the checks)
 #
 # Run from the repo root (build the index first if needed):
 #   uv run python -c "from utils import process_documents_folder; process_documents_folder()"
@@ -12,17 +15,17 @@
 
 description: Local RAG evaluation
 
-# The provider receives this rendered prompt — just the question.
+# 1) The prompt template. {{question}} is filled from each test's vars.question.
 prompts:
   - "{{question}}"
 
-# Custom provider: runs the real RAG pipeline.
+# 2) The provider: a custom Python script that runs the real RAG (retrieve + generate).
 providers:
   - id: file://rag_provider.py
     label: local-rag
 
-# Route model-graded assertions (llm-rubric) to the local Ollama model,
-# so nothing leaves the machine and no API key is needed.
+# 3) Shared options: route model-graded (llm-rubric) checks to the LOCAL Ollama model,
+#    so grading needs no API key and nothing leaves the machine.
 defaultTest:
   options:
     provider:
@@ -31,5 +34,139 @@ defaultTest:
         config:
           temperature: 0.1
 
-# Test cases come from the golden dataset.
-tests: file://generate_tests.py:create_tests
+# 4) The test cases. Each case: a question (vars) + the checks to run (assert).
+#    Two kinds of assertion:
+#      - icontains   deterministic: does the answer contain this substring? (case-insensitive)
+#      - llm-rubric  model-graded: the local judge decides if the answer meets the rubric
+tests:
+  # ---------- Nimbus Audio support policy ----------
+  - description: refund-window
+    vars:
+      question: "What is the refund window in the returns policy?"
+    assert:
+      - type: icontains
+        value: "30 days"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer is grounded in the documents and states that the refund window is 30 days."
+        metric: grounded
+
+  - description: warranty-length
+    vars:
+      question: "How long is the standard warranty?"
+    assert:
+      - type: icontains
+        value: "24 months"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer is grounded in the documents and states that the standard warranty is 24 months."
+        metric: grounded
+
+  - description: support-email
+    vars:
+      question: "What is the Nimbus Audio support email address?"
+    assert:
+      - type: icontains
+        value: "support@nimbus-audio.example"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer gives the support email support@nimbus-audio.example, grounded in the documents."
+        metric: grounded
+
+  # ---------- Project Meridian mission report ----------
+  - description: meridian-lead
+    vars:
+      question: "Who is the lead scientist on Project Meridian?"
+    assert:
+      - type: icontains
+        value: "Hana Okafor"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer is grounded in the documents and identifies Dr. Hana Okafor as the lead scientist."
+        metric: grounded
+
+  - description: meridian-depth
+    vars:
+      question: "What was the maximum dive depth recorded?"
+    assert:
+      - type: icontains
+        value: "4,812"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer is grounded in the documents and states the maximum dive depth was 4,812 metres."
+        metric: grounded
+
+  - description: meridian-budget
+    vars:
+      question: "What was the total mission budget for Project Meridian?"
+    assert:
+      - type: icontains
+        value: "28.4 million"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer is grounded in the documents and states the total mission budget was $28.4 million."
+        metric: grounded
+
+  - description: meridian-mission-code
+    vars:
+      question: "What is the mission code for Project Meridian?"
+    assert:
+      - type: icontains
+        value: "PM-2026-ABYSS"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer is grounded in the documents and gives the mission code PM-2026-ABYSS."
+        metric: grounded
+
+  # ---------- Quantum Computing Research Laboratory report ----------
+  - description: quantum-director
+    vars:
+      question: "Who is the research director of the Quantum Computing Research Laboratory?"
+    assert:
+      - type: icontains
+        value: "Elena Rodriguez"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer is grounded in the documents and identifies Prof. Elena Rodriguez as the research director."
+        metric: grounded
+
+  - description: quantum-focus
+    vars:
+      question: "What is the laboratory's research focus?"
+    assert:
+      - type: icontains
+        value: "Topological Quantum Error Correction"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer is grounded in the documents and states the research focus is Topological Quantum Error Correction."
+        metric: grounded
+
+  - description: quantum-budget
+    vars:
+      question: "What is the annual budget of the Quantum Computing Research Laboratory?"
+    assert:
+      - type: icontains
+        value: "15.7 million"
+        metric: contains-fact
+      - type: llm-rubric
+        value: "The answer is grounded in the documents and states the annual budget is $15.7 million."
+        metric: grounded
+
+  # ---------- Unanswerable: the documents do not contain this information ----------
+  # A good RAG should decline rather than invent an answer. These may FAIL today —
+  # that is the harness surfacing a real weakness to fix later.
+  - description: nimbus-ceo-salary
+    vars:
+      question: "What is the salary of Nimbus Audio's CEO?"
+    assert:
+      - type: llm-rubric
+        value: "The answer declines or states the information is not in the documents. It must NOT invent a specific figure, name, or fact."
+        metric: declines-unknown
+
+  - description: meridian-crew-names
+    vars:
+      question: "What are the names of every crew member on the RV Deepcurrent?"
+    assert:
+      - type: llm-rubric
+        value: "The answer declines or states the information is not in the documents. It must NOT invent specific names."
+        metric: declines-unknown

@@ -13,8 +13,9 @@ Good first eval tool: simple, mostly deterministic assertions.
 
 - [x] Add a custom Python provider (`eval/promptfoo/rag_provider.py`) so promptfoo
       evaluates the real RAG (`answer_question`), not just the bare LLM.
-- [x] Generate tests from the golden dataset (`generate_tests.py`) — single source
-      of truth, no duplicated test file.
+- [x] Write the test cases **declaratively** under `tests:` in
+      `promptfooconfig.yaml` (the traditional, most-common promptfoo style — the
+      whole suite is visible in one file).
 - [x] `promptfooconfig.yaml`: custom provider + `llm-rubric` grader routed to the
       local Ollama model (`defaultTest.options.provider.text`).
 - [x] Assertions: `icontains` (key facts, deterministic) + `llm-rubric` (grounded /
@@ -31,7 +32,8 @@ Good first eval tool: simple, mostly deterministic assertions.
 
 ## Files
 
-`eval/promptfoo/promptfooconfig.yaml`
+`eval/promptfoo/promptfooconfig.yaml` (prompts + provider + judge + all test cases),
+`eval/promptfoo/rag_provider.py` (custom provider)
 
 ## Done when
 

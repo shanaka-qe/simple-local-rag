@@ -1,18 +1,39 @@
 # promptfoo evaluation
 
-Evaluate the local RAG against the golden dataset (`eval/dataset.yaml`) — fully
-local, no API keys.
+Evaluate the local RAG with promptfoo — fully local, no API keys.
+
+## The principles (anatomy of a promptfoo config)
+
+A promptfoo run has four parts, all declared in `promptfooconfig.yaml`:
+
+| Part | Means |
+|------|-------|
+| `prompts` | what gets sent to the provider — here just `{{question}}` |
+| `providers` | what produces the answer — here our **custom Python provider** running the real RAG |
+| `defaultTest` | options shared by every test — including the **judge** for model-graded checks |
+| `tests` | a list of cases; each case = `vars` (the inputs) + `assert` (the checks) |
+
+This config uses the **traditional declarative style**: every test case is written
+out by hand under `tests:`, so the whole suite is visible in one file.
+
+## Two kinds of assertion
+
+| Type | How it decides pass/fail | Trustworthy? |
+|------|--------------------------|--------------|
+| `icontains` | deterministic — does the answer contain this substring (case-insensitive)? | exact, never flaky |
+| `llm-rubric` | model-graded — the local judge LLM decides if the answer meets the rubric | approximate (a judge's opinion) |
+
+The judge for `llm-rubric` is routed to the **local Ollama model** via
+`defaultTest.options.provider` — so grading is free, offline, and needs no key.
 
 ## How it fits together
 
 ```
- eval/dataset.yaml ──► generate_tests.py ──► test cases (question + assertions)
-                                                   │
- question ──► rag_provider.py ──► answer_question() ──► answer
+ promptfooconfig.yaml ── tests ──► question ──► rag_provider.py ──► answer_question() ──► answer
                                                    │
                           assertions check the answer:
-                            • icontains  → does it contain the key fact?  (deterministic)
-                            • llm-rubric → is it grounded / does it decline? (judged by local Ollama)
+                            • icontains  → contains the key fact?        (deterministic)
+                            • llm-rubric → grounded / declines?           (local judge)
 ```
 
 ## Run it
@@ -36,8 +57,19 @@ Tip: add `--filter-first-n 3` to step 2 for a quick partial run.
 
 - **`contains-fact`** (deterministic) should be green for answerable cases.
 - **`grounded`** (llm-rubric, local judge) scores whether the answer is supported.
-- **`declines-unknown`** on the two `answerable: false` cases tests honesty — these
-  may well **fail** at first, because the RAG prompt doesn't yet tell the model to
+- **`declines-unknown`** on the two unanswerable cases tests honesty — these may
+  well **fail** at first, because the RAG prompt doesn't yet tell the model to
   decline. That's the harness doing its job: surfacing a real weakness to fix later.
 
 > Each test runs the model locally, so a full run takes a few minutes on CPU.
+
+## Files
+
+| File | Role |
+|------|------|
+| `promptfooconfig.yaml` | the whole eval: prompts, provider, judge, and all test cases |
+| `rag_provider.py` | custom provider — runs the real RAG so promptfoo evaluates the full pipeline |
+
+> The test cases here are written declaratively. The golden dataset
+> (`eval/dataset.yaml`) remains the shared source for the Python eval tools
+> (DeepEval, Ragas) added in later tasks.

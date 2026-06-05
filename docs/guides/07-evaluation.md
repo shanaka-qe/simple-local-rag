@@ -2,9 +2,10 @@
 
 ← [Chat UI](06-chat-ui.md) · [Guides index](README.md) · next → [Reference](08-reference.md)
 
-> **Status: 🚧 planned** — build it with tasks
-> [05](../tasks/05-golden-dataset.md) · [06](../tasks/06-evals-promptfoo.md) ·
-> [07](../tasks/07-evals-deepeval.md) · [08](../tasks/08-evals-ragas.md).
+> **Status:** golden dataset ([05](../tasks/05-golden-dataset.md)), promptfoo
+> ([06](../tasks/06-evals-promptfoo.md)), and DeepEval
+> ([07](../tasks/07-evals-deepeval.md)) are ✅ built; Ragas
+> ([08](../tasks/08-evals-ragas.md)) is 🚧 planned.
 
 ## Why evaluate a RAG?
 
@@ -50,9 +51,10 @@ local-judged scores as directional, not absolute.
 - How retrieval quality and answer quality are scored separately.
 - The practical cost/quality/privacy trade-offs of judging locally.
 
-## Under the hood (intended design)
+## Under the hood
 
-> Built in tasks [05–08](../tasks/05-golden-dataset.md); the planned shapes follow.
+> Golden dataset (05), promptfoo (06), and DeepEval (07) are **✅ built** below;
+> Ragas ([task 08](../tasks/08-evals-ragas.md)) is the remaining planned one.
 
 ### Golden dataset (task 05 — ✅ built: `eval/dataset.yaml`)
 
@@ -76,9 +78,9 @@ than invents an answer.
 ### promptfoo (task 06 — ✅ built: `eval/promptfoo/`)
 
 A **custom Python provider** runs the real RAG (`answer_question`), so promptfoo
-evaluates the whole pipeline, not just the bare LLM. Test cases are generated from
-the golden dataset, and the `llm-rubric` judge is routed to the **local** Ollama
-model:
+evaluates the whole pipeline, not just the bare LLM. Test cases are written
+**declaratively** under `tests:` (the traditional promptfoo style), and the
+`llm-rubric` judge is routed to the **local** Ollama model:
 
 ```yaml
 providers:
@@ -87,7 +89,12 @@ defaultTest:
   options:
     provider:
       text: { id: ollama:chat:llama3.1:8b }   # local judge for llm-rubric
-tests: file://generate_tests.py:create_tests  # built from eval/dataset.yaml
+tests:
+  - description: refund-window
+    vars: { question: "What is the refund window in the returns policy?" }
+    assert:
+      - { type: icontains, value: "30 days" }              # deterministic
+      - { type: llm-rubric, value: "grounded; says 30 days" }  # local judge
 ```
 
 Each test mixes a deterministic `icontains` (does the answer contain the key
@@ -95,23 +102,32 @@ fact?) with a model-graded `llm-rubric` (is it grounded / does it decline?).
 Deterministic asserts never flake; `llm-rubric` uses the local model as judge.
 Run with `npx promptfoo eval` (see `eval/promptfoo/README.md`).
 
-### DeepEval (task 07)
+### DeepEval (task 07 — ✅ built: `eval/deepeval/test_rag.py`)
 
-pytest-style; judge set to local Ollama (`deepeval set-ollama llama3.1:8b`):
+pytest-style. Test cases are written out explicitly; the judge is a local Ollama
+model configured **in code** (`OllamaModel`) and passed to each metric — no API
+key, no machine-global `set-ollama`:
 
 ```python
+from deepeval import assert_test
 from deepeval.test_case import LLMTestCase
 from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric
+from deepeval.models import OllamaModel
 
-r  = answer_question(case["question"])
-tc = LLMTestCase(
-    input=case["question"],
-    actual_output=r["answer"],
-    retrieval_context=r["contexts"],
-)
-assert_test(tc, [AnswerRelevancyMetric(threshold=0.7),
-                 FaithfulnessMetric(threshold=0.7)])
+JUDGE = OllamaModel(model="llama3.1:8b", base_url="http://localhost:11434")
+
+@pytest.mark.parametrize("question", QUESTIONS)
+def test_rag(question):
+    r = answer_question(question)
+    tc = LLMTestCase(input=question, actual_output=r["answer"],
+                     retrieval_context=r["contexts"])
+    assert_test(tc, [FaithfulnessMetric(threshold=0.7, model=JUDGE),
+                     AnswerRelevancyMetric(threshold=0.7, model=JUDGE)])
 ```
+
+Run with `uv run deepeval test run eval/deepeval/test_rag.py`. Expect answer
+-relevancy to sometimes dip below threshold with a small local judge — the
+local-judge trade-off (see the local-judge note above).
 
 ### Ragas (task 08)
 
