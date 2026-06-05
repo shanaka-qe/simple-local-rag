@@ -43,7 +43,7 @@ All settings live in `config/settings.py`.
 | `RAG_PROMPT` | context/question template | Prompt sent to the LLM (task 03+) |
 | `OLLAMA_MODEL` | `llama3.1:8b` | Local generation model |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server |
-| `LLM_TEMPERATURE` | `0.7` | Sampling temperature |
+| `LLM_TEMPERATURE` | `0.5` | Sampling temperature |
 
 ## Function reference
 

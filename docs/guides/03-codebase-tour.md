@@ -102,7 +102,7 @@ class Settings:
     CHUNK_OVERLAP = 100                                     # shared chars between chunks
     OLLAMA_MODEL = "llama3.1:8b"                            # local LLM for answers
     OLLAMA_BASE_URL = "http://localhost:11434"             # local Ollama server
-    LLM_TEMPERATURE = 0.7                                   # 0 = strict, higher = creative
+    LLM_TEMPERATURE = 0.5                                   # 0 = strict, higher = creative
 ```
 
 - A **class** groups related data and functions. These are class attributes — the

@@ -74,7 +74,7 @@ New settings in `config/settings.py`:
 ```python
 OLLAMA_MODEL    = "llama3.1:8b"
 OLLAMA_BASE_URL = "http://localhost:11434"
-LLM_TEMPERATURE = 0.7
+LLM_TEMPERATURE = 0.5
 ```
 
 The `RAG_PROMPT` template tells the model to answer **only** from the context, in a
