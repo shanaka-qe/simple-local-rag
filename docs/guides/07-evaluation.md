@@ -79,28 +79,38 @@ than invents an answer.
 
 A **custom Python provider** runs the real RAG (`answer_question`), so promptfoo
 evaluates the whole pipeline, not just the bare LLM. Test cases are written
-**declaratively** under `tests:` (the traditional promptfoo style), and the
-`llm-rubric` judge is routed to the **local** Ollama model:
+**declaratively** under `tests:` (the traditional promptfoo style), and the judge
+is routed to the **local** Ollama model:
 
 ```yaml
 providers:
-  - id: file://rag_provider.py          # runs the real RAG (retrieve + generate)
+  - id: file://rag_provider.py          # returns {output: answer, metadata: {contexts}}
 defaultTest:
   options:
     provider:
-      text: { id: ollama:chat:llama3.1:8b }   # local judge for llm-rubric
+      text: { id: ollama:chat:llama3.1:8b }   # local judge
 tests:
   - description: refund-window
-    vars: { question: "What is the refund window in the returns policy?" }
+    vars: { query: "What is the refund window in the returns policy?" }
     assert:
-      - { type: icontains, value: "30 days" }              # deterministic
-      - { type: llm-rubric, value: "grounded; says 30 days" }  # local judge
+      - { type: icontains, value: "30 days" }                        # deterministic
+      - type: context-faithfulness                                   # judged vs the chunks
+        contextTransform: 'context.metadata.contexts.join("\n\n")'   # feed the judge the context
+        threshold: 0.7
 ```
 
-Each test mixes a deterministic `icontains` (does the answer contain the key
-fact?) with a model-graded `llm-rubric` (is it grounded / does it decline?).
-Deterministic asserts never flake; `llm-rubric` uses the local model as judge.
-Run with `npx promptfoo eval` (see `eval/promptfoo/README.md`).
+Each answerable case mixes a deterministic `icontains` (does the answer contain the
+key fact?) with `context-faithfulness` (is the answer supported by the retrieved
+chunks?). **Key subtlety:** a plain `llm-rubric` saying "grounded in the documents"
+does *not* receive the documents — so it can't truly verify grounding;
+`context-faithfulness` + `contextTransform` passes the chunks to the judge (and
+requires the question in a `query` var).
+
+⚠️ **Honest caveat:** even correctly wired, promptfoo's `context-faithfulness`
+scores very terse factual answers low (e.g. `"$28.4 million USD"` → ~0) even though
+the fact is in the context — and even with a stronger judge. The deterministic
+`contains-fact` is the reliable gate for facts; treat model-graded faithfulness as
+directional. Run with `npx promptfoo eval` (see `eval/promptfoo/README.md`).
 
 ### DeepEval (task 07 — ✅ built: `eval/deepeval/test_rag.py`)
 

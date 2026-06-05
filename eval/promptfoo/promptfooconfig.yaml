@@ -15,16 +15,19 @@
 
 description: Local RAG evaluation
 
-# 1) The prompt template. {{question}} is filled from each test's vars.question.
+# 1) The prompt template. {{query}} is filled from each test's vars.query.
+#    (context-faithfulness requires the user question to live in a `query` var.)
 prompts:
-  - "{{question}}"
+  - "{{query}}"
 
 # 2) The provider: a custom Python script that runs the real RAG (retrieve + generate).
+#    It returns {"output": answer, "metadata": {"contexts": [...]}} — the retrieved
+#    chunks travel in metadata so the grounding check below can see them.
 providers:
   - id: file://rag_provider.py
     label: local-rag
 
-# 3) Shared options: route model-graded (llm-rubric) checks to the LOCAL Ollama model,
+# 3) Shared options: route model-graded checks to the LOCAL Ollama model,
 #    so grading needs no API key and nothing leaves the machine.
 defaultTest:
   options:
@@ -35,129 +38,145 @@ defaultTest:
           temperature: 0.1
 
 # 4) The test cases. Each case: a question (vars) + the checks to run (assert).
-#    Two kinds of assertion:
-#      - icontains   deterministic: does the answer contain this substring? (case-insensitive)
-#      - llm-rubric  model-graded: the local judge decides if the answer meets the rubric
+#    Three kinds of assertion used here:
+#      - icontains             deterministic: does the answer contain this substring?
+#      - context-faithfulness  model-graded: is the answer supported by the RETRIEVED
+#                              chunks? The chunks are pulled from the provider's
+#                              metadata via `contextTransform` so the judge actually
+#                              sees them (a plain llm-rubric does NOT receive them).
+#      - llm-rubric            model-graded: free-form judgement (used for the
+#                              "should decline" honesty checks, which need no context)
 tests:
   # ---------- Nimbus Audio support policy ----------
   - description: refund-window
     vars:
-      question: "What is the refund window in the returns policy?"
+      query: "What is the refund window in the returns policy?"
     assert:
       - type: icontains
         value: "30 days"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer is grounded in the documents and states that the refund window is 30 days."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   - description: warranty-length
     vars:
-      question: "How long is the standard warranty?"
+      query: "How long is the standard warranty?"
     assert:
       - type: icontains
         value: "24 months"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer is grounded in the documents and states that the standard warranty is 24 months."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   - description: support-email
     vars:
-      question: "What is the Nimbus Audio support email address?"
+      query: "What is the Nimbus Audio support email address?"
     assert:
       - type: icontains
         value: "support@nimbus-audio.example"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer gives the support email support@nimbus-audio.example, grounded in the documents."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   # ---------- Project Meridian mission report ----------
   - description: meridian-lead
     vars:
-      question: "Who is the lead scientist on Project Meridian?"
+      query: "Who is the lead scientist on Project Meridian?"
     assert:
       - type: icontains
         value: "Hana Okafor"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer is grounded in the documents and identifies Dr. Hana Okafor as the lead scientist."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   - description: meridian-depth
     vars:
-      question: "What was the maximum dive depth recorded?"
+      query: "What was the maximum dive depth recorded?"
     assert:
       - type: icontains
         value: "4,812"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer is grounded in the documents and states the maximum dive depth was 4,812 metres."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   - description: meridian-budget
     vars:
-      question: "What was the total mission budget for Project Meridian?"
+      query: "What was the total mission budget for Project Meridian?"
     assert:
       - type: icontains
         value: "28.4 million"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer is grounded in the documents and states the total mission budget was $28.4 million."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   - description: meridian-mission-code
     vars:
-      question: "What is the mission code for Project Meridian?"
+      query: "What is the mission code for Project Meridian?"
     assert:
       - type: icontains
         value: "PM-2026-ABYSS"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer is grounded in the documents and gives the mission code PM-2026-ABYSS."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   # ---------- Quantum Computing Research Laboratory report ----------
   - description: quantum-director
     vars:
-      question: "Who is the research director of the Quantum Computing Research Laboratory?"
+      query: "Who is the research director of the Quantum Computing Research Laboratory?"
     assert:
       - type: icontains
         value: "Elena Rodriguez"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer is grounded in the documents and identifies Prof. Elena Rodriguez as the research director."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   - description: quantum-focus
     vars:
-      question: "What is the laboratory's research focus?"
+      query: "What is the laboratory's research focus?"
     assert:
       - type: icontains
         value: "Topological Quantum Error Correction"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer is grounded in the documents and states the research focus is Topological Quantum Error Correction."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   - description: quantum-budget
     vars:
-      question: "What is the annual budget of the Quantum Computing Research Laboratory?"
+      query: "What is the annual budget of the Quantum Computing Research Laboratory?"
     assert:
       - type: icontains
         value: "15.7 million"
         metric: contains-fact
-      - type: llm-rubric
-        value: "The answer is grounded in the documents and states the annual budget is $15.7 million."
+      - type: context-faithfulness
+        contextTransform: 'context.metadata.contexts.join("\n\n")'
+        threshold: 0.7
         metric: grounded
 
   # ---------- Unanswerable: the documents do not contain this information ----------
-  # A good RAG should decline rather than invent an answer. These may FAIL today —
-  # that is the harness surfacing a real weakness to fix later.
+  # A good RAG should decline rather than invent an answer. "Did it decline?" can be
+  # judged from the answer alone, so a plain llm-rubric (no context) is fine here.
+  # These may FAIL today — that is the harness surfacing a real weakness to fix later.
   - description: nimbus-ceo-salary
     vars:
-      question: "What is the salary of Nimbus Audio's CEO?"
+      query: "What is the salary of Nimbus Audio's CEO?"
     assert:
       - type: llm-rubric
         value: "The answer declines or states the information is not in the documents. It must NOT invent a specific figure, name, or fact."
@@ -165,7 +184,7 @@ tests:
 
   - description: meridian-crew-names
     vars:
-      question: "What are the names of every crew member on the RV Deepcurrent?"
+      query: "What are the names of every crew member on the RV Deepcurrent?"
     assert:
       - type: llm-rubric
         value: "The answer declines or states the information is not in the documents. It must NOT invent specific names."
