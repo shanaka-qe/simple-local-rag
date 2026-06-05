@@ -18,6 +18,7 @@ Run from the repo root (build the index first if needed):
   uv run python eval/ragas/run_ragas.py
 """
 
+import csv
 import os
 import sys
 import warnings
@@ -48,26 +49,21 @@ from config.settings import settings
 from utils import answer_question
 from utils.document_search import get_embeddings_model
 
-# Cases written out explicitly (declarative). `reference` is the ground-truth
-# answer the retrieval/answer metrics are scored against.
-CASES = [
-    {
-        "question": "What is the refund window in the returns policy?",
-        "reference": "The refund window is 30 days from the delivery date.",
-    },
-    {
-        "question": "Who is the lead scientist on Project Meridian?",
-        "reference": "The lead scientist is Dr. Hana Okafor.",
-    },
-    {
-        "question": "Who is the research director of the Quantum Computing Research Laboratory?",
-        "reference": "The research director is Prof. Elena Rodriguez.",
-    },
-    {
-        "question": "How long is the standard warranty?",
-        "reference": "The standard warranty is 24 months from the date of purchase.",
-    },
-]
+# Cases loaded from the SHARED golden dataset (eval/dataset.csv) — the same single
+# source of truth that promptfoo and DeepEval read. We take the answerable cases;
+# `reference` is the ground-truth answer (the CSV's `expected_answer`) that the
+# retrieval/answer metrics are scored against.
+DATASET = REPO_ROOT / "eval" / "dataset.csv"
+
+
+def load_cases():
+    with open(DATASET, newline="", encoding="utf-8") as f:
+        return [{"question": row["query"], "reference": row["expected_answer"]}
+                for row in csv.DictReader(f)
+                if row["answerable"].strip().lower() == "true"]
+
+
+CASES = load_cases()
 
 
 def build_dataset() -> EvaluationDataset:

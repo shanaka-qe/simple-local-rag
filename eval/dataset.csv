@@ -1,0 +1,13 @@
+id,query,answerable,expected_answer,expected_contains,expected_context
+refund-window,"What is the refund window in the returns policy?",true,"The refund window is 30 days from the delivery date.",30 days,NIMBUS_SUPPORT_MARKER_5183
+warranty-length,"How long is the standard warranty?",true,"The standard warranty is 24 months from the date of purchase.",24 months,NIMBUS_SUPPORT_MARKER_5183
+support-email,"What is the Nimbus Audio support email address?",true,"The support email is support@nimbus-audio.example.",support@nimbus-audio.example,NIMBUS_SUPPORT_MARKER_5183
+meridian-lead,"Who is the lead scientist on Project Meridian?",true,"The lead scientist is Dr. Hana Okafor.",Hana Okafor,MERIDIAN_OCEAN_MARKER_6207
+meridian-depth,"What was the maximum dive depth recorded?",true,"The maximum dive depth recorded was 4,812 metres.","4,812",MERIDIAN_OCEAN_MARKER_6207
+meridian-budget,"What was the total mission budget for Project Meridian?",true,"The total mission budget was $28.4 million USD.",28.4 million,MERIDIAN_OCEAN_MARKER_6207
+meridian-mission-code,"What is the mission code for Project Meridian?",true,"The mission code is PM-2026-ABYSS.",PM-2026-ABYSS,MERIDIAN_OCEAN_MARKER_6207
+quantum-director,"Who is the research director of the Quantum Computing Research Laboratory?",true,"The research director is Prof. Elena Rodriguez.",Elena Rodriguez,QCR-LAB-9847
+quantum-focus,"What is the laboratory's research focus?",true,"The research focus is Topological Quantum Error Correction.",Topological Quantum Error Correction,QCR-LAB-9847
+quantum-budget,"What is the annual budget of the Quantum Computing Research Laboratory?",true,"The annual budget is $15.7 million.",15.7 million,QCR-LAB-9847
+nimbus-ceo-salary,"What is the salary of Nimbus Audio's CEO?",false,"The documents do not contain this information.",,
+meridian-crew-names,"What are the names of every crew member on the RV Deepcurrent?",false,"The documents do not contain this information.",,

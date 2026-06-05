@@ -43,4 +43,7 @@ Good first eval tool: simple, mostly deterministic assertions.
 `npx promptfoo eval` runs locally and produces a pass/fail table per case.
 
 > Learning focus: deterministic assertions vs. model-graded assertions, and how a
-> local model can act as the judge.
+> local model can act as the judge. Also the **explicit** test style (cases
+> hand-written inline here) vs. the **data-driven** style used by DeepEval/Ragas
+> (cases loaded from `eval/dataset.csv`) — promptfoo keeps its cases inline on
+> purpose, so the two approaches can be compared side by side.

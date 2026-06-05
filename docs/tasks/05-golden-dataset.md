@@ -3,14 +3,18 @@
 **Status: ✅ Completed**
 
 **Goal:** A small set of question / expected-answer pairs to evaluate the RAG
-against. All three eval tools (06–08) read from this.
+against. The Python tools — DeepEval (07) and Ragas (08) — read this CSV as their
+single source of truth. promptfoo (06) deliberately keeps its own inline cases as
+the *explicit-style* exemplar, so the two styles can be compared.
 
 ## Steps
 
-- [x] Create `eval/dataset.yaml` with 12 cases. Each case:
-      - `id`, `question`, `answerable`
+- [x] Create `eval/dataset.csv` with 12 cases. One row per case; columns:
+      - `id`, `query`, `answerable`
       - `expected_answer` (ground truth) and `expected_contains` (deterministic substrings)
       - `expected_context` (a marker that should appear in retrieved chunks)
+      - CSV is the natural data-driven format: a flat table any tool (or a
+        spreadsheet) can read with the standard-library `csv` module.
 - [x] Base the cases on the sample `.md` files and anchor `expected_context` on a
       string that lives in the **same chunk** as the answer (e.g. `QCR-LAB-9847`
       for the quantum facts — the bottom-of-doc marker is split into another chunk).
@@ -26,7 +30,7 @@ against. All three eval tools (06–08) read from this.
 
 ## Files
 
-`eval/dataset.yaml`
+`eval/dataset.csv`
 
 ## Done when
 

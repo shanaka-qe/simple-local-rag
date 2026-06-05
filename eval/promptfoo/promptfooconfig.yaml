@@ -8,6 +8,11 @@
 #   defaultTest  options shared by all tests — incl. the judge for model-graded checks
 #   tests        a list of cases; each has `vars` (inputs) + `assert` (the checks)
 #
+# Style note: promptfoo is this repo's EXPLICIT-style exemplar — every test case is
+# written out by hand below, so the whole suite is visible in one file. (The Python
+# tools, DeepEval and Ragas, show the contrasting data-driven style: they read the
+# shared golden dataset eval/dataset.csv instead.)
+#
 # Run from the repo root (build the index first if needed):
 #   uv run python -c "from utils import process_documents_folder; process_documents_folder()"
 #   PROMPTFOO_PYTHON="$PWD/.venv/bin/python" npx -y promptfoo@latest eval -c eval/promptfoo/promptfooconfig.yaml
@@ -203,7 +208,6 @@ tests:
   # ---------- Unanswerable: the documents do not contain this information ----------
   # A good RAG should decline rather than invent an answer. "Did it decline?" can be
   # judged from the answer alone, so a plain llm-rubric (no context) is fine here.
-  # These may FAIL today — that is the harness surfacing a real weakness to fix later.
   - description: nimbus-ceo-salary
     vars:
       query: "What is the salary of Nimbus Audio's CEO?"

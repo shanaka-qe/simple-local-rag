@@ -16,6 +16,7 @@ Run from the repo root (build the index first if needed):
   uv run deepeval test run eval/deepeval/test_rag.py
 """
 
+import csv
 import os
 import sys
 from pathlib import Path
@@ -37,16 +38,19 @@ from utils import answer_question
 # own generator call). Passing it explicitly keeps the suite fully local.
 JUDGE = OllamaModel(model="llama3.1:8b", base_url="http://localhost:11434")
 
-# Questions to evaluate, written out explicitly (declarative — like the promptfoo
-# config). Each is answerable from the sample documents.
-QUESTIONS = [
-    "What is the refund window in the returns policy?",
-    "How long is the standard warranty?",
-    "Who is the lead scientist on Project Meridian?",
-    "What was the maximum dive depth recorded?",
-    "Who is the research director of the Quantum Computing Research Laboratory?",
-    "What is the laboratory's research focus?",
-]
+# Questions to evaluate, loaded from the SHARED golden dataset (eval/dataset.csv) —
+# the same single source of truth that promptfoo and Ragas read. We take only the
+# answerable cases: faithfulness/relevancy are meaningful for answers, not declines.
+DATASET = REPO_ROOT / "eval" / "dataset.csv"
+
+
+def load_answerable_questions():
+    with open(DATASET, newline="", encoding="utf-8") as f:
+        return [row["query"] for row in csv.DictReader(f)
+                if row["answerable"].strip().lower() == "true"]
+
+
+QUESTIONS = load_answerable_questions()
 
 
 @pytest.mark.parametrize("question", QUESTIONS)

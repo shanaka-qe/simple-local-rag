@@ -15,9 +15,11 @@ model as the judge (no paid API).
 - [x] Configure the judge as a local Ollama model **in code**
       (`OllamaModel(model="llama3.1:8b", ...)` passed to each metric) — reproducible,
       no machine-global `set-ollama` needed.
-- [x] Create `eval/deepeval/test_rag.py` the traditional pytest way:
-      explicit questions → `answer_question()` → `LLMTestCase(input, actual_output,
-      retrieval_context)` → `assert_test(...)`.
+- [x] Create `eval/deepeval/test_rag.py` the traditional pytest way: load the
+      answerable questions from the shared `eval/dataset.csv` (`csv.DictReader`) →
+      `answer_question()` → `LLMTestCase(input, actual_output, retrieval_context)`
+      → `assert_test(...)`. (This is the *data-driven* style — the contrast with
+      promptfoo's hand-written inline cases.)
 - [x] Metrics: `FaithfulnessMetric` and `AnswerRelevancyMetric` (threshold 0.7).
 - [x] Run: `uv run deepeval test run eval/deepeval/test_rag.py`.
 

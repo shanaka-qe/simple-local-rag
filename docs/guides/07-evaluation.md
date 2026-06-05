@@ -29,14 +29,18 @@ the yardstick all three tools measure against.
 
 ## Three tools, same RAG
 
-You'll run three tools against the same system and dataset. They overlap on
-purpose — comparing them is the point.
+You'll run three tools against the same RAG. They overlap on purpose — comparing
+them is the point. They also demonstrate **two ways to hold the test cases**:
 
-| Tool | Language | Style | Focus |
-|------|----------|-------|-------|
-| **promptfoo** | Node / YAML | Config-driven assertions | Deterministic checks (contains X? valid JSON?) + model-graded rubrics |
-| **DeepEval** | Python | pytest-style | Metric assertions (faithfulness, answer-relevancy) in a test runner |
-| **Ragas** | Python | Metrics over a dataset | RAG-specific metrics separating retrieval vs. answer quality |
+| Tool | Language | Test-case style | Focus |
+|------|----------|-----------------|-------|
+| **promptfoo** | Node / YAML | **Explicit** — 12 cases hand-written inline in the config | Deterministic checks (contains X?) + model-graded rubrics |
+| **DeepEval** | Python | **Data-driven** — answerable cases loaded from `dataset.csv` | Faithfulness + answer-relevancy in a pytest runner |
+| **Ragas** | Python | **Data-driven** — cases loaded from `dataset.csv` | RAG-specific metrics: retrieval vs. answer quality |
+
+The **explicit** vs **data-driven** split is deliberate (see *Two styles, on
+purpose* below): one golden dataset (`eval/dataset.csv`) feeds the Python tools,
+while promptfoo keeps its suite visible in one file. Same cases, two patterns.
 
 ## The local-judge trade-off
 
@@ -56,16 +60,15 @@ local-judged scores as directional, not absolute.
 > All four eval pieces are **✅ built** below: golden dataset (05), promptfoo (06),
 > DeepEval (07), and Ragas (08).
 
-### Golden dataset (task 05 — ✅ built: `eval/dataset.yaml`)
+### Golden dataset (task 05 — ✅ built: `eval/dataset.csv`)
 
-```yaml
-cases:
-  - id: quantum-director
-    question: "Who is the research director of the Quantum Computing Research Laboratory?"
-    answerable: true
-    expected_answer: "The research director is Prof. Elena Rodriguez."
-    expected_contains: ["Elena Rodriguez"]      # deterministic answer check
-    expected_context: "QCR-LAB-9847"            # must appear in the retrieved chunks
+A flat CSV table — one row per case — that the Python tools read directly with the
+standard-library `csv` module:
+
+```csv
+id,query,answerable,expected_answer,expected_contains,expected_context
+quantum-director,"Who is the research director...?",true,"...Prof. Elena Rodriguez.",Elena Rodriguez,QCR-LAB-9847
+nimbus-ceo-salary,"What is the salary of Nimbus Audio's CEO?",false,"The documents do not contain this information.",,
 ```
 
 The unique markers in the sample docs make `expected_context` a **deterministic**
@@ -74,6 +77,12 @@ retrieval check — no judge needed for that part. Anchor it on a string in the
 different chunk, so the cases use the header's `QCR-LAB-9847` instead). The file
 also includes 2 `answerable: false` cases to test that the RAG declines rather
 than invents an answer.
+
+**Two styles, on purpose.** DeepEval and Ragas load their cases *from this CSV*
+(`csv.DictReader`) — the **data-driven** style: the dataset lives in one file and
+the test code stays generic. promptfoo instead writes every case out **inline** in
+its YAML config — the **explicit** style: the whole suite is visible in one place.
+Seeing both is the lesson; neither is "more correct".
 
 ### promptfoo (task 06 — ✅ built: `eval/promptfoo/`)
 
@@ -118,17 +127,23 @@ lean on deterministic checks. Run with `npx promptfoo eval` (see
 
 ### DeepEval (task 07 — ✅ built: `eval/deepeval/test_rag.py`)
 
-pytest-style. Test cases are written out explicitly; the judge is a local Ollama
-model configured **in code** (`OllamaModel`) and passed to each metric — no API
-key, no machine-global `set-ollama`:
+pytest-style. The questions are **loaded from the shared `dataset.csv`** (the
+data-driven style — only the answerable rows are used here); the judge is a local
+Ollama model configured **in code** (`OllamaModel`) and passed to each metric — no
+API key, no machine-global `set-ollama`:
 
 ```python
+import csv
 from deepeval import assert_test
 from deepeval.test_case import LLMTestCase
 from deepeval.metrics import AnswerRelevancyMetric, FaithfulnessMetric
 from deepeval.models import OllamaModel
 
 JUDGE = OllamaModel(model="llama3.1:8b", base_url="http://localhost:11434")
+
+# load the answerable cases from the shared golden dataset
+with open("eval/dataset.csv", newline="") as f:
+    QUESTIONS = [r["query"] for r in csv.DictReader(f) if r["answerable"] == "true"]
 
 @pytest.mark.parametrize("question", QUESTIONS)
 def test_rag(question):
@@ -146,7 +161,9 @@ local-judge trade-off (see the local-judge note above).
 ### Ragas (task 08 — ✅ built: `eval/ragas/run_ragas.py`)
 
 Not pytest or YAML — you build a dataset, run `evaluate(...)`, and read a scores
-table. Local LLM + local embeddings, so nothing leaves your machine:
+table. Cases are **loaded from the shared `dataset.csv`** (`expected_answer`
+becomes the `reference`); local LLM + local embeddings, so nothing leaves your
+machine:
 
 ```python
 from ragas import EvaluationDataset, evaluate
@@ -156,7 +173,8 @@ from ragas.llms import LangchainLLMWrapper
 from ragas.embeddings import LangchainEmbeddingsWrapper
 from langchain_ollama import ChatOllama
 
-# rows: user_input, response, retrieved_contexts, reference (ground truth)
+# each row built from dataset.csv: user_input, response, retrieved_contexts,
+# reference (the CSV's expected_answer = ground truth)
 dataset = EvaluationDataset.from_list([...])
 judge   = LangchainLLMWrapper(ChatOllama(model="llama3.1:8b"))
 emb     = LangchainEmbeddingsWrapper(local_embeddings)

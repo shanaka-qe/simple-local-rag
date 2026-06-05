@@ -15,9 +15,12 @@ scores table:
 | 3. Assemble the dataset | `EvaluationDataset.from_list([...])` |
 | 4. Evaluate | `evaluate(dataset, metrics, llm=<local>, embeddings=<local>)` |
 
-`reference` is the **ground-truth answer** the retrieval metrics are scored
-against. The judge LLM (`ChatOllama`) and embeddings (our local mxbai model) are
-both local, so nothing leaves the machine.
+Cases are **loaded from the shared golden dataset** (`eval/dataset.csv`) with the
+standard-library `csv` module — the **data-driven** style (the deliberate contrast
+with promptfoo's hand-written inline cases). The CSV's `expected_answer` column
+becomes each row's `reference` — the **ground-truth answer** the retrieval metrics
+are scored against. The judge LLM (`ChatOllama`) and embeddings (our local mxbai
+model) are both local, so nothing leaves the machine.
 
 ## The metrics — retrieval vs. answer
 
@@ -64,4 +67,4 @@ moves fast.
 
 | File | Role |
 |------|------|
-| `run_ragas.py` | builds the dataset from explicit cases, evaluates with local LLM + embeddings, prints the scores |
+| `run_ragas.py` | loads cases from the shared `eval/dataset.csv`, builds the dataset, evaluates with local LLM + embeddings, prints the scores |

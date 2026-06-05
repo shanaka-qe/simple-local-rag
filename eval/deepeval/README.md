@@ -14,8 +14,10 @@ DeepEval treats each evaluation like a unit test:
 | 3. Assert against metrics | `assert_test(test_case, [FaithfulnessMetric(...), AnswerRelevancyMetric(...)])` |
 | 4. Run the file | `deepeval test run eval/deepeval/test_rag.py` |
 
-Test cases are written out **explicitly** (the traditional, learnable style) — the
-questions are listed in the file, not generated from an external dataset.
+Test cases are **loaded from the shared golden dataset** (`eval/dataset.csv`) with
+the standard-library `csv` module — the **data-driven** style. Only the answerable
+rows are used (faithfulness/relevancy are meaningful for answers, not declines).
+This is the deliberate contrast with promptfoo, which hand-writes its cases inline.
 
 ## The metrics
 
@@ -58,7 +60,7 @@ but terse answer like "30 days" can score ~0.5. This is the lesson, not a bug:
 
 | File | Role |
 |------|------|
-| `test_rag.py` | the pytest suite: explicit questions → `LLMTestCase` → metric assertions, judged locally |
+| `test_rag.py` | the pytest suite: questions loaded from `dataset.csv` → `LLMTestCase` → metric assertions, judged locally |
 
-> The golden dataset (`eval/dataset.yaml`) remains the shared reference; this suite
-> lists its answerable questions explicitly for clarity.
+> The golden dataset (`eval/dataset.csv`) is the shared source of truth for the
+> Python eval tools; this suite reads its answerable rows with `csv.DictReader`.

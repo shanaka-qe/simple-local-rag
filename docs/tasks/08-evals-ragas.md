@@ -12,7 +12,8 @@ embeddings), so nothing leaves your machine.
 ## Steps
 
 - [x] Add dep: `uv add ragas`.
-- [x] Create `eval/ragas/run_ragas.py` with explicit cases (question + `reference`):
+- [x] Create `eval/ragas/run_ragas.py` loading cases from the shared
+      `eval/dataset.csv` (`csv.DictReader`; `expected_answer` → `reference`):
       - run each through `answer_question()` to get the answer + contexts,
       - build an `EvaluationDataset` (`user_input`, `response`,
         `retrieved_contexts`, `reference`),

@@ -41,5 +41,7 @@ the *how*.
 | Evals — DeepEval | ✅ done | [07](../tasks/07-evals-deepeval.md) |
 | Evals — Ragas | ✅ done | [08](../tasks/08-evals-ragas.md) |
 
-Today the project does the **retrieval half** (embed → store → search). Generation,
-UI, and evals are what you'll add as you work through the tasks.
+The full pipeline is built: ingestion → embeddings → ChromaDB → search →
+local-LLM generation → a Streamlit chat UI, plus a golden dataset and three
+evaluation tools (promptfoo, DeepEval, Ragas). Work through the tasks to see how
+each piece was added.

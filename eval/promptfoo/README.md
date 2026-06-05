@@ -99,6 +99,7 @@ answer completeness / judge quality if you need it to be reliable.
 | `promptfooconfig.yaml` | the whole eval: prompts, provider, judge, and all test cases |
 | `rag_provider.py` | custom provider — runs the real RAG so promptfoo evaluates the full pipeline |
 
-> The test cases here are written declaratively. The golden dataset
-> (`eval/dataset.yaml`) remains the shared source for the Python eval tools
-> (DeepEval, Ragas) added in later tasks.
+> **Style note:** promptfoo is this repo's **explicit-style** exemplar — every case
+> is hand-written here in the config. The Python tools (DeepEval, Ragas) show the
+> contrasting **data-driven** style: they read the shared golden dataset
+> `eval/dataset.csv` with `csv.DictReader`. Comparing the two is the point.
