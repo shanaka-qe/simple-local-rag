@@ -18,3 +18,8 @@ data/chroma_db/
 
 # Claude Code session state
 .claude/
+
+# promptfoo run artifacts
+.promptfoo/
+eval/promptfoo/output*
+
