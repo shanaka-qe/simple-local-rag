@@ -2,6 +2,9 @@
 
 ← [Setup](02-setup.md) · [Guides index](README.md) · next → [Using the RAG](04-using-the-rag.md)
 
+The map first (architecture, layout, what each file does), then a line-by-line
+walkthrough of every core file. Python idioms are explained as they appear.
+
 ## Architecture
 
 ```
@@ -59,56 +62,400 @@ local-rag-solution/
 > The `utils/*.py` files are libraries imported by `main.py`. Running them directly
 > does nothing on their own — use `main.py`.
 
-## Under the hood
+## Where LangChain is used
 
-### Ingestion — `utils/document_processor.py`
+LangChain handles three of the four RAG stages; ChromaDB is used through its own
+native client (not LangChain's wrapper).
 
-`process_documents_folder()` orchestrates four steps:
+| Stage | LangChain piece |
+|-------|-----------------|
+| Chunking | `CharacterTextSplitter` (`document_processor.py`) |
+| Embedding (docs + query) | `HuggingFaceEmbeddings` (`document_processor.py`, `document_search.py`) |
+| Generation | `OllamaLLM` (`rag.py`) |
+| Vector store | **not** LangChain — the raw `chromadb` client |
 
-1. **`clear_chroma_db()`** — deletes the existing collection via the ChromaDB
-   client API so the index rebuilds cleanly (no stale or duplicate chunks). Using
-   the API rather than removing files keeps it safe in long-running processes like
-   the Streamlit app, where the client is cached in memory.
-2. **`load_documents_from_folder(folder)`** — walks the folder with
-   `Path.rglob('*')` and reads `.md` files into a list of strings.
-3. **`chunk_documents(docs)`** — runs each document through
-   `CharacterTextSplitter(chunk_size=500, chunk_overlap=100)` and flattens the
-   result into one list of chunk strings.
-4. **`create_embeddings_and_save(chunks)`** — the core:
-   ```python
-   client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
-   collection = client.create_collection(name, metadata={"hnsw:space": "cosine"})
-   embeddings_model = HuggingFaceEmbeddings(model_name=..., model_kwargs={"device": "cpu"})
-   vectors = embeddings_model.embed_documents(chunks)   # list[list[float]], each len 1024
-   collection.add(documents=chunks, embeddings=vectors, ids=[f"chunk_{i}" for i, _ in enumerate(chunks)])
-   ```
+---
 
-### What ChromaDB stores
+# Walkthrough (line by line)
 
-For each chunk the collection holds three aligned things: an **id**
-(`chunk_0`, `chunk_1`, …), the **document** (the chunk text), and its **embedding**
-(the 1024-float vector). Metadata is empty in this project.
+Reading order — each file builds on the one before:
 
-### Search — `utils/document_search.py`
-
-```python
-client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
-collection = client.get_collection(settings.COLLECTION_NAME)
-q  = settings.format_query(query)                # prepends the mxbai query prefix
-qv = embeddings_model.embed_query(q)             # 1024-float vector
-results = collection.query(query_embeddings=[qv], n_results=n)
+```
+ settings.py        the config every file reads
+   → document_processor.py   BUILD the index
+   → document_search.py      RETRIEVE chunks
+   → rag.py                  GENERATE an answer
+   → __init__.py             the public API ("from utils import ...")
+   → main.py                 the terminal console
+   → app.py                  the browser UI
 ```
 
-`results` is a dict of parallel lists, batched per query. The useful keys:
+## 1. `config/settings.py` — the single config object
 
-| Key | Shape | Meaning |
-|-----|-------|---------|
-| `results["documents"][0]` | `list[str]` | the matched chunk texts, best first |
-| `results["distances"][0]` | `list[float]` | cosine distance (smaller = closer) |
-| `results["ids"][0]` | `list[str]` | the chunk ids |
+```python
+class Settings:
+    EMBEDDING_MODEL = "mixedbread-ai/mxbai-embed-large-v1"  # text → numbers model
+    EMBEDDING_DEVICE = "cpu"                                # "cuda" with a GPU
+    CHROMA_DIR = "./data/chroma_db"                         # where the vector DB lives
+    COLLECTION_NAME = "documents"                           # the "table" inside it
+    CHUNK_SIZE = 500                                        # characters per chunk
+    CHUNK_OVERLAP = 100                                     # shared chars between chunks
+    OLLAMA_MODEL = "llama3.1:8b"                            # local LLM for answers
+    OLLAMA_BASE_URL = "http://localhost:11434"             # local Ollama server
+    LLM_TEMPERATURE = 0.7                                   # 0 = strict, higher = creative
+```
 
-> `search_documents()` returns these as `{"query", "chunks"}`
-> (see [task 02](../tasks/02-search-returns-results.md)); pass `verbose=True` to
-> also print them.
+- A **class** groups related data and functions. These are class attributes — the
+  default settings every file reads.
+
+```python
+    RAG_PROMPT = """Context: {context}
+
+Question: {question}
+
+Answer:"""
+    QUERY_PROMPT = "Represent this sentence for searching relevant passages:"
+```
+
+- `RAG_PROMPT` is the **prompt template** sent to the LLM; `{context}` and
+  `{question}` are placeholders filled in later.
+- `QUERY_PROMPT` is a prefix the mxbai model wants in front of **search queries**
+  (it was trained that way). Documents are embedded without it; questions with it.
+
+```python
+    def __init__(self):
+        Path("./data").mkdir(exist_ok=True)
+        Path("./data/chroma_db").mkdir(exist_ok=True)
+        Path("./data/documents").mkdir(exist_ok=True)
+```
+
+- `__init__` is the **constructor** — it runs when the object is created. It makes
+  the `data/` folders if missing (`exist_ok=True` = don't error if they exist).
+
+```python
+    def format_query(self, query):
+        return f"{self.QUERY_PROMPT} {query}"               # adds the mxbai prefix
+
+    def format_rag_prompt(self, context, question):
+        return self.RAG_PROMPT.format(context=context, question=question)
+
+settings = Settings()                                       # the ONE shared instance
+```
+
+- `f"..."` is an **f-string** — text with `{...}` placeholders filled in.
+- The last line creates **one** `Settings` object named `settings`. Every other file
+  does `from config.settings import settings` and shares this same object.
+
+## 2. `utils/document_processor.py` — BUILD the index
+
+```python
+sys.path.append(str(Path(__file__).parent.parent))   # add the project root to the path
+from config.settings import settings
+```
+
+- `__file__` is this file's path; `.parent.parent` is the project root. Adding it to
+  `sys.path` lets `from config.settings import settings` work from anywhere.
+
+### `clear_chroma_db()`
+
+```python
+    client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
+    try:
+        client.delete_collection(settings.COLLECTION_NAME)
+        print("🗑️ Deleted existing collection")
+    except Exception:
+        print("📁 No existing collection found")
+```
+
+- A **try/except**: try to delete the collection; if it doesn't exist, the `except`
+  catches the error instead of crashing. We delete via the **client API** (not by
+  removing files) so it stays consistent in the long-running Streamlit app, where
+  the ChromaDB client is cached in memory.
+
+### `load_documents_from_folder(folder_path)`
+
+```python
+    documents = []
+    supported_extensions = ['.md']
+    for file_path in folder.rglob('*'):                       # walk the folder recursively
+        if file_path.is_file() and file_path.suffix.lower() in supported_extensions:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read().strip()
+                if content:
+                    documents.append(content)                 # one big string per file
+```
+
+- `rglob('*')` walks every file in every subfolder. Only `.md` files are read. Each
+  file's text becomes one entry in the `documents` list.
+
+### `chunk_documents(documents)`
+
+```python
+    text_splitter = CharacterTextSplitter(
+        chunk_size=settings.CHUNK_SIZE, chunk_overlap=settings.CHUNK_OVERLAP)
+    all_chunks = []
+    for doc in documents:
+        chunks = text_splitter.split_text(doc)
+        all_chunks.extend(chunks)                              # flatten into one list
+```
+
+- Splits each document into ~500-char chunks (100 shared) and flattens them into one
+  list. (3 documents → 17 chunks for the sample data.)
+
+### `create_embeddings_and_save(chunks, ...)` — the core
+
+```python
+    client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
+    try:
+        client.delete_collection(collection_name)              # defensive clean rebuild
+    except Exception:
+        pass
+    collection = client.create_collection(
+        name=collection_name, metadata={"hnsw:space": "cosine"})  # cosine similarity + HNSW index
+
+    embeddings_model = HuggingFaceEmbeddings(
+        model_name=settings.get_embedding_model(),
+        model_kwargs={"device": settings.EMBEDDING_DEVICE})
+    chunk_embeddings = embeddings_model.embed_documents(chunks)   # 17 chunks → 17 vectors (1024 floats each)
+
+    chunk_ids = [f"chunk_{i}" for i in range(len(chunks))]        # list comprehension: chunk_0, chunk_1, ...
+    collection.add(documents=chunks, embeddings=chunk_embeddings, ids=chunk_ids)  # store all three, aligned
+```
+
+- `pass` means "do nothing." A **list comprehension** is a compact loop that builds a
+  list. `collection.add(...)` persists three aligned things per chunk: the **text**,
+  its **vector**, and its **id**.
+
+### `process_documents_folder(...)` — the orchestrator
+
+```python
+    clear_chroma_db()                                   # 1. wipe old collection
+    documents = load_documents_from_folder(folder_path) # 2. read .md files
+    if not documents:
+        return None                                     #    nothing to build
+    chunks = chunk_documents(documents)                 # 3. split
+    collection = create_embeddings_and_save(chunks, ...) # 4. embed + store
+    return collection
+```
+
+- The "build the index" button. Returns `None` if no documents were found (callers
+  treat that as "nothing built").
+
+## 3. `utils/document_search.py` — RETRIEVE chunks
+
+```python
+@lru_cache(maxsize=1)
+def get_embeddings_model():
+    return HuggingFaceEmbeddings(
+        model_name=settings.get_embedding_model(),
+        model_kwargs={"device": settings.EMBEDDING_DEVICE})
+```
+
+- `@lru_cache` is a **decorator** that remembers the function's result. `maxsize=1`
+  stores one. Effect: the heavy embedding model loads **once** per process and is
+  reused — this is what keeps the chat loop and UI responsive.
+
+### `search_documents(query, n_results=3, verbose=False)`
+
+```python
+    client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
+    collection = client.get_collection(settings.COLLECTION_NAME)  # read-only: get, not create
+
+    embeddings_model = get_embeddings_model()                     # cached
+    formatted_query = settings.format_query(query)                # add mxbai prefix
+    query_embedding = embeddings_model.embed_query(formatted_query)  # question → 1024 numbers
+
+    results = collection.query(query_embeddings=[query_embedding], n_results=n_results)
+    chunks = results["documents"][0]                              # the matched chunk texts, best first
+
+    if verbose:
+        ... print each chunk ...
+
+    return {"query": query, "chunks": chunks}                     # RETURNS data, not prints
+```
+
+- Embeds the question into the same space as the chunks, asks ChromaDB for the
+  closest `n_results`, and **returns** them. The return value is what the chat UI and
+  the eval tools consume. `collection.query(...)` returns parallel lists batched per
+  query; `results["documents"][0]` is the matched chunk texts (best first).
+
+### `get_index_status()`
+
+```python
+    try:
+        client = chromadb.PersistentClient(path=settings.CHROMA_DIR)
+        collection = client.get_collection(settings.COLLECTION_NAME)
+        return {"exists": True, "count": collection.count()}
+    except Exception:
+        return {"exists": False, "count": 0}
+```
+
+- Reports whether the index exists and how many chunks it holds — used by the console
+  and UI to decide whether to prompt you to build first.
+
+## 4. `utils/rag.py` — GENERATE an answer (the full RAG loop)
+
+```python
+def answer_question(query: str, n_results: int = 3) -> dict:
+    result = search_documents(query, n_results=n_results)   # STEP 1: retrieve
+    contexts = result["chunks"]
+
+    prompt = settings.format_rag_prompt(                    # STEP 2: build the prompt
+        context="\n\n".join(contexts), question=query)
+
+    llm = OllamaLLM(                                        # STEP 3: generate (local)
+        model=settings.OLLAMA_MODEL,
+        base_url=settings.OLLAMA_BASE_URL,
+        temperature=settings.LLM_TEMPERATURE)
+    answer = llm.invoke(prompt)                             # HTTP call to localhost:11434
+
+    return {"answer": answer, "contexts": contexts}         # STEP 4: return both
+```
+
+- `"\n\n".join(contexts)` glues the chunks into one text block for the `{context}`
+  slot. `llm.invoke(prompt)` sends the prompt to local Ollama and returns the answer.
+- Returning `contexts` alongside `answer` is deliberate: the UI shows them as
+  "sources," and the eval tools score the answer against them (faithfulness).
+
+## 5. `utils/__init__.py` — the public API
+
+```python
+from .document_processor import (process_documents_folder, clear_chroma_db, load_documents_from_folder)
+from .document_search import (search_documents, get_index_status)
+from .rag import (answer_question)
+__all__ = [ ... ]
+```
+
+- Runs on `import utils`. Re-exports the key functions so callers write
+  `from utils import answer_question` instead of the longer module path. `__all__`
+  lists the intended public names.
+
+## 6. `main.py` — the terminal console
+
+A plain input/print loop (no Streamlit here).
+
+```python
+def require_index() -> bool:                                 # guard for options 3/4/5
+    if not get_index_status()["exists"]:
+        print("⚠️ No index yet — choose option 1 to build it first.")
+        return False
+    return True
+```
+
+- A **guard**: search/ask/chat bail out early if no index exists.
+
+```python
+def chat():
+    while True:
+        query = input("\nYou: ").strip()                     # input() reads what you type
+        if not query or query.lower() in {"exit", "quit"}:
+            break                                            # leave the loop
+        print_answer(query)
+```
+
+- `input(...)` pauses for your text. The loop repeats until you type `exit`/`quit` or
+  leave it blank.
+
+```python
+def main():
+    actions = {"1": build_index, "2": show_status, "3": do_search, "4": ask_once, "5": chat}
+    while True:
+        print(MENU)
+        choice = input("Select an option: ").strip()
+        if choice == "0":
+            break
+        action = actions.get(choice)                         # None if key not in dict
+        if action:
+            action()                                         # call the chosen function
+        else:
+            print("❓ Unknown option ...")
+
+if __name__ == "__main__":                                   # run only when executed directly
+    main()
+```
+
+- The `actions` **dictionary** maps a typed key to a function — cleaner than a long
+  if/elif chain. `if __name__ == "__main__":` runs `main()` only when you execute the
+  file directly (`uv run python main.py`), not when it's imported.
+
+## 7. `app.py` — the browser UI (Streamlit)
+
+The key Streamlit fact: **the whole script re-runs top to bottom on every
+interaction.** State that must survive reruns lives in `st.session_state`.
+
+```python
+with st.sidebar:                                             # everything here goes in the left sidebar
+    notice = st.session_state.pop("notice", None)            # read-and-remove a one-time message
+    if notice:
+        getattr(st, notice[0])(notice[1])                    # e.g. st.success("...") or st.error("...")
+
+    status = get_index_status()
+    st.success(...) if status["exists"] else st.warning(...) # green/amber status box
+
+    if st.button("Build / rebuild index"):                  # True on the run it's clicked
+        with st.spinner("Embedding documents…"):
+            try:
+                process_documents_folder()
+                st.session_state["notice"] = ("success", "✅ Index rebuilt.")
+            except Exception as exc:
+                st.session_state["notice"] = ("error", f"Build failed: {exc}")
+        st.rerun()                                           # reload so status/notice refresh
+```
+
+- `getattr(st, "success")` returns `st.success` — a trick to pick the message style
+  dynamically. The `try/except` turns build failures into a friendly message.
+
+```python
+if not get_index_status()["exists"]:
+    st.info("Add .md files ... then click Build / rebuild index ...")
+    st.stop()                                                # halt here until an index exists
+```
+
+```python
+if "messages" not in st.session_state:
+    st.session_state.messages = []                           # init history once
+for message in st.session_state.messages:                    # redraw the conversation each rerun
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
+        if message.get("contexts"):
+            render_sources(message["contexts"])
+```
+
+- The history loop is why the conversation stays on screen across reruns. (History is
+  display-only — it is **not** sent back to the model, so each question is answered
+  independently.)
+
+```python
+if query := st.chat_input("Ask a question about your documents"):  # walrus := assigns and tests
+    st.session_state.messages.append({"role": "user", "content": query})
+    with st.chat_message("assistant"):
+        with st.spinner("Thinking…"):
+            try:
+                result = answer_question(query, n_results=3)
+            except Exception as exc:
+                st.error(f"Could not generate an answer: {exc}")
+                st.stop()
+        st.markdown(result["answer"])
+        render_sources(result["contexts"])
+    st.session_state.messages.append({"role": "assistant",
+        "content": result["answer"], "contexts": result["contexts"]})
+```
+
+- `:=` is the **walrus operator** — it assigns `query` and checks it's non-empty in
+  one expression. The new question is saved to history, answered (guarded by
+  try/except), shown with its sources, and the answer appended to history.
+
+## Python idioms used here
+
+| Idiom | Means |
+|-------|-------|
+| `f"{x}"` | f-string — insert `x` into text |
+| `[f(x) for x in items]` | list comprehension — build a list with a compact loop |
+| `try: ... except Exception:` | run code; handle errors instead of crashing |
+| `@lru_cache` | decorator that caches a function's result |
+| `:=` | walrus — assign and use a value in one expression |
+| `with open(...) as f:` | context manager — auto-closes the file afterward |
+| `if __name__ == "__main__":` | run this block only when the file is executed directly |
+| `settings = Settings()` | create one shared object the whole app imports |
 
 → Next: [Using the RAG](04-using-the-rag.md)

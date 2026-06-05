@@ -20,6 +20,9 @@ area you care about. Each guide is self-contained.
 | 07 | [Evaluation](07-evaluation.md) | Measuring quality with promptfoo, DeepEval, Ragas |
 | 08 | [Reference](08-reference.md) | Glossary and troubleshooting |
 
+The [Codebase tour](03-codebase-tour.md) also includes a full line-by-line
+walkthrough of every core file.
+
 ## Status at a glance
 
 This project is built incrementally. Each area has a task file in
