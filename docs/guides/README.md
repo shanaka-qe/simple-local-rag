@@ -16,7 +16,7 @@ area you care about. Each guide is self-contained.
 | 03 | [Codebase tour](03-codebase-tour.md) | The architecture and what each file does |
 | 04 | [Using the RAG](04-using-the-rag.md) | Run it on your own docs; key settings |
 | 05 | [Local LLM generation](05-generation.md) | Closing the loop: turning chunks into an answer |
-| 06 | [Chat UI](06-chat-ui.md) | A single-page app to chat with your documents |
+| 06 | [Chat UI](06-chat-ui.md) | A single-page app to chat with your documents (with follow-up questions) |
 | 07 | [Evaluation](07-evaluation.md) | Measuring quality with promptfoo, DeepEval, Ragas |
 | 08 | [Reference](08-reference.md) | Glossary and troubleshooting |
 
@@ -40,8 +40,9 @@ the *how*.
 | Evals — promptfoo | ✅ done | [06](../tasks/06-evals-promptfoo.md) |
 | Evals — DeepEval | ✅ done | [07](../tasks/07-evals-deepeval.md) |
 | Evals — Ragas | ✅ done | [08](../tasks/08-evals-ragas.md) |
+| Conversational RAG (prompt chaining) | ✅ done | [09](../tasks/09-conversational-rag.md) |
 
 The full pipeline is built: ingestion → embeddings → ChromaDB → search →
-local-LLM generation → a Streamlit chat UI, plus a golden dataset and three
-evaluation tools (promptfoo, DeepEval, Ragas). Work through the tasks to see how
-each piece was added.
+local-LLM generation → a Streamlit chat UI with **multi-turn follow-ups (prompt
+chaining)**, plus a golden dataset and three evaluation tools (promptfoo,
+DeepEval, Ragas). Work through the tasks to see how each piece was added.

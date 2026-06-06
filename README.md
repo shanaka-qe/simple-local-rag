@@ -12,6 +12,7 @@ promptfoo, DeepEval, and Ragas. No cloud accounts, no API keys, no cost.
 - How RAG works: retrieval (embeddings + vector search) and generation (a local LLM)
 - Running models locally with HuggingFace embeddings and Ollama
 - Chatting with your own documents through a simple web UI
+- Handling multi-turn follow-up questions with **prompt chaining**
 - Measuring RAG quality with three different evaluation tools
 
 ## Quick start

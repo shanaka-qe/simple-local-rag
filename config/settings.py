@@ -38,7 +38,21 @@ Context:
 Question: {question}
 
 Answer:"""
-    
+
+    # Condense prompt template — the first link in the prompt chain. It rewrites a
+    # follow-up question into a standalone one using the chat history, so that
+    # "how long is it?" becomes "how long is the standard warranty?" before search.
+    CONDENSE_PROMPT = """Given the conversation so far and a follow-up question,
+rewrite the follow-up as a standalone question that makes sense on its own.
+Keep it short. Output only the rewritten question, nothing else.
+
+Conversation so far:
+{history}
+
+Follow-up question: {question}
+
+Standalone question:"""
+
     # Query prompt for mxbai embedding
     QUERY_PROMPT = "Represent this sentence for searching relevant passages:"
     
@@ -59,6 +73,10 @@ Answer:"""
     def format_rag_prompt(self, context, question):
         """Format RAG prompt"""
         return self.RAG_PROMPT.format(context=context, question=question)
+
+    def format_condense_prompt(self, history, question):
+        """Format the question-condensing prompt (the chaining step)."""
+        return self.CONDENSE_PROMPT.format(history=history, question=question)
 
 
 # Global settings instance

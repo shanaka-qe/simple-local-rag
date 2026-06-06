@@ -23,7 +23,9 @@ to change the question. Built with **Streamlit** — one small Python file.
 ## How it works
 
 - A text box takes your question.
-- It calls the RAG answer function from [task 03](../tasks/03-local-llm-generation.md).
+- It calls the RAG answer function from [task 03](../tasks/03-local-llm-generation.md),
+  passing the **recent conversation** so follow-up questions work (see *prompt
+  chaining* in [task 09](../tasks/09-conversational-rag.md)).
 - It shows the answer, with the retrieved chunks tucked into an expandable
   "sources" section.
 - Chat history stays on screen during the session.
@@ -59,7 +61,8 @@ for m in st.session_state.messages:                 # replay history each rerun
 
 if q := st.chat_input("Ask a question"):
     st.session_state.messages.append({"role": "user", "content": q})
-    result = answer_question(q)
+    history = st.session_state.messages[:-1][-6:]    # recent turns, minus this one
+    result = answer_question(q, history=history)     # chaining handles follow-ups
     with st.chat_message("assistant"):
         st.markdown(result["answer"])
         with st.expander("Sources"):
@@ -72,6 +75,9 @@ Technical notes:
 
 - **`st.session_state`** persists the conversation across Streamlit's
   rerun-on-every-interaction model (the whole script re-executes on each input).
+  The last few turns are passed to `answer_question` as `history`, which is what
+  lets follow-up questions ("how do I claim it?") be understood — the **prompt
+  chaining** added in [task 09](../tasks/09-conversational-rag.md).
 - The embedding model is loaded **once** and reused via an `lru_cache` in
   `utils/document_search.py`, so the UI stays responsive without reloading it on
   every interaction.

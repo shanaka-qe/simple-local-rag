@@ -65,10 +65,11 @@ def ask_once():
 
 
 def chat():
-    """Interactive question loop until the user exits."""
+    """Interactive question loop with conversation memory until the user exits."""
     if not require_index():
         return
     print("💬 Chat mode — type 'exit' (or leave blank) to return to the menu.")
+    history = []
     while True:
         try:
             query = input("\nYou: ").strip()
@@ -77,17 +78,22 @@ def chat():
             break
         if not query or query.lower() in {"exit", "quit"}:
             break
-        print_answer(query)
+        result = print_answer(query, history)
+        # Remember this turn (keep only the last few) so follow-ups get rewritten.
+        history.append({"role": "user", "content": query})
+        history.append({"role": "assistant", "content": result["answer"]})
+        history = history[-6:]
 
 
-def print_answer(query: str):
+def print_answer(query: str, history=None):
     """Generate an answer for a question and show its source chunks."""
-    result = answer_question(query, n_results=3)
+    result = answer_question(query, n_results=3, history=history)
     print(f"\n🤖 {result['answer']}")
     print("📚 Sources:")
     for i, chunk in enumerate(result["contexts"], start=1):
         preview = " ".join(chunk.split())[:120]
         print(f"   {i}. {preview}...")
+    return result
 
 
 def main():

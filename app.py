@@ -69,8 +69,11 @@ if query := st.chat_input("Ask a question about your documents"):
 
     with st.chat_message("assistant"):
         with st.spinner("Thinking…"):
+            # Pass the recent conversation (everything before this question, last
+            # few turns) so the chain can rewrite follow-ups into standalone ones.
+            history = st.session_state.messages[:-1][-6:]
             try:
-                result = answer_question(query, n_results=3)
+                result = answer_question(query, n_results=3, history=history)
             except Exception as exc:
                 st.error(f"Could not generate an answer: {exc}")
                 st.stop()

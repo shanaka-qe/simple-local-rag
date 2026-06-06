@@ -25,5 +25,7 @@ chat with and evaluate. Each task is self-contained — do them in order.
 | 06 | [Evals with promptfoo](06-evals-promptfoo.md) | ✅ done | 05 |
 | 07 | [Evals with DeepEval](07-evals-deepeval.md) | ✅ done | 05 |
 | 08 | [Evals with Ragas](08-evals-ragas.md) | ✅ done | 05 |
+| 09 | [Conversational RAG (prompt chaining)](09-conversational-rag.md) | ✅ done | 03 |
 
 Tasks 06–08 are independent of each other — pick any order once 05 is done.
+Task 09 (multi-turn chat) only needs task 03.

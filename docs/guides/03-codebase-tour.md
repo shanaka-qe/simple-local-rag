@@ -296,24 +296,29 @@ def get_embeddings_model():
 ## 4. `utils/rag.py` — GENERATE an answer (the full RAG loop)
 
 ```python
-def answer_question(query: str, n_results: int = 3) -> dict:
-    result = search_documents(query, n_results=n_results)   # STEP 1: retrieve
+def answer_question(query: str, n_results: int = 3, history=None) -> dict:
+    # CHAIN STEP 1: rewrite a follow-up into a standalone question (only if there
+    # is prior conversation). With no history this is skipped — single-turn RAG.
+    search_query = condense_question(query, history) if history else query
+
+    result = search_documents(search_query, n_results=n_results)   # retrieve
     contexts = result["chunks"]
 
-    prompt = settings.format_rag_prompt(                    # STEP 2: build the prompt
-        context="\n\n".join(contexts), question=query)
+    prompt = settings.format_rag_prompt(                           # build the prompt
+        context="\n\n".join(contexts), question=search_query)
 
-    llm = OllamaLLM(                                        # STEP 3: generate (local)
-        model=settings.OLLAMA_MODEL,
-        base_url=settings.OLLAMA_BASE_URL,
-        temperature=settings.LLM_TEMPERATURE)
-    answer = llm.invoke(prompt)                             # HTTP call to localhost:11434
-
-    return {"answer": answer, "contexts": contexts}         # STEP 4: return both
+    answer = _get_llm().invoke(prompt)                # CHAIN STEP 2: generate (local)
+    return {"answer": answer, "contexts": contexts}   # return both
 ```
 
 - `"\n\n".join(contexts)` glues the chunks into one text block for the `{context}`
-  slot. `llm.invoke(prompt)` sends the prompt to local Ollama and returns the answer.
+  slot. `_get_llm().invoke(prompt)` sends the prompt to local Ollama and returns
+  the answer (`_get_llm()` just builds the `OllamaLLM`, reused by both chain steps).
+- **`history` and the chain:** when the caller passes recent chat turns,
+  `condense_question` makes one extra LLM call that rewrites a vague follow-up
+  ("how long is it?") into a standalone question before search. No history → the
+  step is skipped and behaviour is unchanged (so the eval tools are unaffected).
+  See [task 09](../tasks/09-conversational-rag.md).
 - Returning `contexts` alongside `answer` is deliberate: the UI shows them as
   "sources," and the eval tools score the answer against them (faithfulness).
 
@@ -346,15 +351,22 @@ def require_index() -> bool:                                 # guard for options
 
 ```python
 def chat():
+    history = []
     while True:
         query = input("\nYou: ").strip()                     # input() reads what you type
         if not query or query.lower() in {"exit", "quit"}:
             break                                            # leave the loop
-        print_answer(query)
+        result = print_answer(query, history)
+        history.append({"role": "user", "content": query})  # remember this turn
+        history.append({"role": "assistant", "content": result["answer"]})
+        history = history[-6:]                               # keep only the last few
 ```
 
 - `input(...)` pauses for your text. The loop repeats until you type `exit`/`quit` or
   leave it blank.
+- The `history` list is what makes the console chat **conversational**: it is passed
+  to `answer_question`, which condenses follow-ups against it ([task 09](../tasks/09-conversational-rag.md)).
+  We keep only the last few turns to bound the prompt.
 
 ```python
 def main():
@@ -421,17 +433,18 @@ for message in st.session_state.messages:                    # redraw the conver
             render_sources(message["contexts"])
 ```
 
-- The history loop is why the conversation stays on screen across reruns. (History is
-  display-only — it is **not** sent back to the model, so each question is answered
-  independently.)
+- The history loop is why the conversation stays on screen across reruns. The recent
+  turns are **also sent to the model** (below) so follow-up questions are understood —
+  that is the prompt chaining from [task 09](../tasks/09-conversational-rag.md).
 
 ```python
 if query := st.chat_input("Ask a question about your documents"):  # walrus := assigns and tests
     st.session_state.messages.append({"role": "user", "content": query})
     with st.chat_message("assistant"):
         with st.spinner("Thinking…"):
+            history = st.session_state.messages[:-1][-6:]    # recent turns, minus this one
             try:
-                result = answer_question(query, n_results=3)
+                result = answer_question(query, n_results=3, history=history)
             except Exception as exc:
                 st.error(f"Could not generate an answer: {exc}")
                 st.stop()
@@ -442,8 +455,10 @@ if query := st.chat_input("Ask a question about your documents"):  # walrus := a
 ```
 
 - `:=` is the **walrus operator** — it assigns `query` and checks it's non-empty in
-  one expression. The new question is saved to history, answered (guarded by
-  try/except), shown with its sources, and the answer appended to history.
+  one expression. The new question is saved to history, then answered with the recent
+  turns as `history` (so follow-ups get rewritten), guarded by try/except, shown with
+  its sources, and the answer appended to history. `messages[:-1]` drops the question
+  we just appended; `[-6:]` keeps the last few turns.
 
 ## Python idioms used here
 

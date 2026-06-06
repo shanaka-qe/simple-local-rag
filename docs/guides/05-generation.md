@@ -101,4 +101,20 @@ Two reasons this wording matters: (1) "decline if not in the context" makes the 
 Returning `contexts` alongside `answer` is deliberate: the UI renders them as
 *sources*, and the eval tools score the answer *against* them (faithfulness).
 
+## Multi-turn conversations (prompt chaining)
+
+`answer_question` also takes an optional `history` (the recent chat turns). When
+it's given, the function runs a tiny **two-step chain** instead of one step:
+
+```
+1. condense   "how long is it?"  +  history  ─►  "how long is the standard warranty?"
+2. retrieve + answer   (search with the standalone question, then write the answer)
+```
+
+The first step rewrites a vague follow-up into a **standalone question** so the
+document search has enough to work with; the second step is the normal retrieve
+-and-answer. With no `history` (a single question, or the eval tools), step 1 is
+skipped and behaviour is unchanged. Cost: a follow-up makes **two** local LLM
+calls instead of one. See [task 09](../tasks/09-conversational-rag.md).
+
 → Next: [Chat UI](06-chat-ui.md)

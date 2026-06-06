@@ -16,6 +16,7 @@
 | **Faithfulness** | Does the answer stick to the retrieved context (vs. making things up)? |
 | **Context precision / recall** | Did retrieval fetch the *right* chunks, and *enough* of them? |
 | **Golden dataset** | A fixed set of test cases used to measure quality repeatably. |
+| **Prompt chaining** | Feeding the output of one LLM step into the next — here, rewriting a follow-up into a standalone question, then retrieving and answering. |
 
 ## Troubleshooting
 
@@ -41,6 +42,7 @@ All settings live in `config/settings.py`.
 | `CHUNK_OVERLAP` | `100` | Shared characters between neighbouring chunks |
 | `QUERY_PROMPT` | mxbai search prefix | Prepended to queries before embedding |
 | `RAG_PROMPT` | context/question template | Prompt sent to the LLM (task 03+) |
+| `CONDENSE_PROMPT` | history/question template | Rewrites a follow-up into a standalone question (task 09) |
 | `OLLAMA_MODEL` | `llama3.1:8b` | Local generation model |
 | `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server |
 | `LLM_TEMPERATURE` | `0.5` | Sampling temperature |
@@ -51,7 +53,8 @@ All settings live in `config/settings.py`.
 |----------|---------|--------|
 | `process_documents_folder(folder_path, collection_name)` | the ChromaDB collection | ✅ |
 | `search_documents(query, n_results)` | `{"query", "chunks"}` | ✅ [task 02](../tasks/02-search-returns-results.md) |
-| `answer_question(query, n_results)` | `{"answer", "contexts"}` | ✅ [task 03](../tasks/03-local-llm-generation.md) |
+| `answer_question(query, n_results, history=None)` | `{"answer", "contexts"}` | ✅ [task 03](../tasks/03-local-llm-generation.md); `history` enables prompt chaining ([task 09](../tasks/09-conversational-rag.md)) |
+| `condense_question(query, history)` | standalone question (str) | ✅ [task 09](../tasks/09-conversational-rag.md) |
 | `get_index_status()` | `{"exists", "count"}` | ✅ |
 
 ## Where to go next
